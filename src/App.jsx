@@ -8,6 +8,7 @@ import StudentPage from './Pages/studentPage';
 import ErrorPage from './Pages/errorPage';
 import AboutPage from './Pages/aboutPage';
 import SignUpPage from './Pages/signupPage';
+import MoreFeatures from './Pages/moreFeatures';
 function App() {
   return (
     <Router>
@@ -18,8 +19,9 @@ function App() {
         <Route path="/StudentPage" element={<StudentPage />} />
         <Route path="/aboutPage" element={<AboutPage/>} />
         <Route path="/SignUpPage" element={<SignUpPage/>}/>
-        <Route path="*" element={<ErrorPage/>} />
-      </Routes>
+        <Route path="/moreFeatures" element={<MoreFeatures/>}/>
+        <Route path="*" element={<ErrorPage />} />      
+        </Routes>
     </Router>
   );
 }
