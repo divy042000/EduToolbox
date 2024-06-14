@@ -4,6 +4,8 @@ import User from "../models/userSchema.js"; // Update the path to your User mode
 dotenvConfig();
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { getAsync, setAsync } from "../server.js";
+
 
 const SignUp = async (req, res) => {
   try {
@@ -61,6 +63,23 @@ const SignUp = async (req, res) => {
   }
 };
 
+async function getUser(cacheKey) {
+  try {
+    let user = await getAsync(cacheKey);
+    console.log(user);
+    if (!user) {
+      user = await User.findOne({ email: cacheKey }); // Assuming the cache key is the email
+      if (user) {
+        await setAsync(cacheKey, JSON.stringify(user)); // Update cache with user data
+      }
+    }
+    return user;
+  } catch (error) {
+    console.error('Failed to retrieve user:', error.message);
+    throw error; // Rethrow or handle as needed
+  }
+}
+
 const SignIn = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,9 +87,10 @@ const SignIn = async (req, res) => {
     // Validate input
     if (!(email && password)) {
       return res
-        .status(400)
-        .json({ message: "Email and password are required" });
-    }
+      .status(400)
+      .json({ message: "Email and password are required" });
+    }  
+    console.log(email);
 
     // Validate email format
     const emailRegex = /\S+@\S+\.\S+/;
@@ -78,27 +98,25 @@ const SignIn = async (req, res) => {
       return res.status(400).json({ message: "Invalid email address" });
     }
 
-    // Check if the user exists
-    const user = await User.findOne({ email });
-
+    // Retrieve user from cache or database
+    const user = await getUser(email);
+    console.log(user);
     if (!user) {
       return res
-        .status(404)
-        .json({ message: "User with this email does not exist" });
+      .status(404)
+      .json({ message: "User with this email does not exist" });
     }
 
-    // Check password
+    // Validate password
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    // Generate token (assuming you have a function to do so)
+    // const token = generateToken(user.id); // Replace generateToken with your actual token generation logic
 
-    res.status(200).json({ token });
+    res.status(200).stringify("hello user");
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
