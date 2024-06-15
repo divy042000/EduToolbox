@@ -4,7 +4,9 @@ import User from "../models/userSchema.js"; // Update the path to your User mode
 dotenvConfig();
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-import { get , set } from "./redisClient.js";
+import { get, set } from "./redisClient.js";
+
+const default_ttl = 10;
 
 const SignUp = async (req, res) => {
   try {
@@ -12,7 +14,9 @@ const SignUp = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -34,7 +38,9 @@ const SignUp = async (req, res) => {
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: "User with this email already exists" });
+      return res
+        .status(409)
+        .json({ message: "User with this email already exists" });
     }
 
     // Hash the password
@@ -45,7 +51,7 @@ const SignUp = async (req, res) => {
     const user = { email, password: hashedPassword };
 
     // Set the user data in Redis cache with an expiration time of 1 hour (3600 seconds)
-    await set(email, JSON.stringify(user), 'EX', 3);
+    await set(email, JSON.stringify(user), default_ttl);
     console.log(`User ${email} set in cache with expiration of 1 hour`);
 
     // Save the user to the database
@@ -59,18 +65,22 @@ const SignUp = async (req, res) => {
   }
 };
 
-
-
-
-const getUser = async (email) => {
+const getUser = async (email, password) => {
   try {
-    let user = await get(email); // Assuming this retrieves the user from Redis
+    let user = await get(email); // Retrieve the user from Redis
     console.log(user);
     if (!user) {
       user = await User.findOne({ email }); // Fetch user from MongoDB if not found in Redis
       if (user) {
-        // Set the user data in Redis with a TTL (e.g., 3600 seconds = 1 hour)
-        await set(email, JSON.stringify(user), 10);
+        // Validate the provided password against the user's hashed password
+        const isValid = await bcrypt.compare(password, user.password);
+        if (isValid) {
+          // Set the user data in Redis with a TTL (e.g., 3600 seconds = 1 hour)
+          await set(email, JSON.stringify(user), default_ttl);
+          return user; // Return the user object if password is valid
+        } else {
+          throw new Error("Invalid password"); // Throw an error if the password is invalid
+        }
       }
     } else {
       user = JSON.parse(user);
@@ -98,19 +108,11 @@ const SignIn = async (req, res) => {
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email address" });
     }
-
-    // Retrieve user from cache or database
-    const user = await getUser(email);
+    const user = await getUser(email, password);
     if (!user) {
       return res
         .status(404)
         .json({ message: "User with this email does not exist" });
-    }
-
-    // Validate password
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return res.status(401).json({ message: "Invalid password" });
     }
 
     // Generate token (assuming you have a function to do so)
