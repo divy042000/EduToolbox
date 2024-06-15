@@ -3,80 +3,66 @@ import { useParaphraseTextMutation } from "../services/paraphraseIt";
 import { copy, linkIcon, loader, tick } from "../assets";
 
 export default function ParaphraserPage() {
-  const textareaRef = useRef(null);
-  const [wordCount, setWordCount] = useState(0);
+  const inputTextareaRef = useRef(null);
+  const outputTextareaRef = useRef(null);
+  const [inputWordCount, setInputWordCount] = useState(0);
+  const [outputWordCount, setOutputWordCount] = useState(0);
   const [copied, setCopied] = useState("");
   const [paraphraseText, { error, isFetching }] = useParaphraseTextMutation();
   const [allParaphrases, setAllParaphrases] = useState([]);
-  const [article, setArticle] = useState("");
+  const [inputArticle, setInputArticle] = useState("");
+  const [outputArticle, setOutputArticle] = useState("");
+
   useEffect(() => {
-    // Fetch previous articles from localStorage on mount
     const previousArticles = JSON.parse(localStorage.getItem("articles")) || [];
     setAllParaphrases(previousArticles);
-  }, []); // Empty dependency array to only run this effect once, on mount
+  }, []);
 
   const handleTextChange = (e) => {
     const counts = e.target.value.split(/\s+/).filter(Boolean).length;
-    setWordCount(counts);
-    setArticle(e.target.value); // Update the article state with the text from the textarea
+    setInputWordCount(counts);
+    setInputArticle(e.target.value);
   };
 
-// Assuming the endpoint URL is correct and you've updated it in your API slice
-const handleParaphrase = async (e) => {
-  e.preventDefault();
-  // Check if the article is already in the list of paraphrases
-  const existingArticle = allParaphrases.find((item) => item.text === article);
-  if (existingArticle) {
-     return setArticle(existingArticle);
-  }
- 
-  try {
-     // Call the mutation with the article text
-     const result = await paraphraseText({ text: article }).unwrap();
- 
-     // Assuming the response contains a 'paraphrasedText' field
-     const paraphrasedText = result.paraphrasedText;
- 
-     // Create a new article object with the original and paraphrased text
-     const newArticle = { originalText: article, paraphrasedText };
- 
-     // Update the state with the new article
-     setAllParaphrases([...allParaphrases, newArticle]);
- 
-     // Optionally, update local storage
-     localStorage.setItem("articles", JSON.stringify([...allParaphrases, newArticle]));
-  } catch (error) {
-     // Handle any errors from the mutation
-     console.error("Failed to paraphrase text:", error);
-  }
- };
- 
+  const handleParaphrase = async (e) => {
+    e.preventDefault();
+    try {
+       const result = await paraphraseText({ text: inputArticle }).unwrap();
+       const paraphrasedText = result.data.paraphrasedText; // Update to access the paraphrased text from the response
+       setOutputArticle(paraphrasedText);
+       const newArticle = { originalText: inputArticle, paraphrasedText };
+       setAllParaphrases([...allParaphrases, newArticle]);
+       localStorage.setItem("articles", JSON.stringify([...allParaphrases, newArticle]));
+    } catch (error) {
+       console.error("Failed to paraphrase text:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full pointer-events-auto">
       <div className="flex flex-col items-center">
         <div className="flex flex-row justify-center w-full z-10 grid-cols-1 mt-5 gap-4">
           <div className="w-2/5 mt-5 mb-5">
             <textarea
-              ref={textareaRef}
+              ref={inputTextareaRef}
               className="border-4 w-full rounded-md border-slate-950 h-96 m-2 font-mono italic p-2 select-auto ..."
               placeholder="Paste your text here or type directly"
               onChange={handleTextChange}
             />
-            {/* Display word count next to the textarea */}
             <div className="text-right mt-2 font-mono italic">
-              Words: {wordCount}
+              Words: {inputWordCount}
             </div>
           </div>
           <div className="w-2/5 mt-5 mb-5">
             <textarea
-              ref={textareaRef}
+              ref={outputTextareaRef}
               className="border-4 w-full rounded-md border-slate-950 h-96 m-2 font-mono italic p-2 select-auto ..."
-              placeholder="Your Paraprased Text is Here"
-              onChange={handleTextChange}
+              placeholder="Your Paraphrased Text is Here"
+              value={outputArticle}
+              readOnly
             />
-            {/* Display word count next to the textarea */}
             <div className="text-right mt-2 font-mono italic">
-              Words: {wordCount}
+              Words: {outputWordCount}
             </div>
           </div>
         </div>
