@@ -2,9 +2,9 @@ import { config as dotenvConfig } from "dotenv";
 import bcrypt from "bcrypt";
 import User from "../models/userSchema.js"; // Update the path to your User model
 dotenvConfig();
-import crypto from 'crypto';
-import nodemailer from 'nodemailer';
-import { get, set } from './redisClient.js';
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+import { get, set } from "./redisClient.js";
 
 const SignUp = async (req, res) => {
   try {
@@ -12,7 +12,9 @@ const SignUp = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -22,17 +24,21 @@ const SignUp = async (req, res) => {
     }
 
     // Check password strength
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
-        message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+        message:
+          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
       });
     }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: "User with this email already exists" });
+      return res
+        .status(409)
+        .json({ message: "User with this email already exists" });
     }
 
     // Hash the password
@@ -51,22 +57,26 @@ const SignUp = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const setWithExpiry = async (key, value, expiryInSeconds) => {
+  await client.setex(key, expiryInSeconds, value);
+};
 
 const getUser = async (email) => {
   try {
-    let user = await get(email);
+    let user = await get(email); // Assuming this retrieves the user from Redis
     console.log(user);
     if (!user) {
-      user = await User.findOne({ email });
+      user = await User.findOne({ email }); // Fetch user from MongoDB if not found in Redis
       if (user) {
-        await set(email, JSON.stringify(user));
+        // Set the user data in Redis with a TTL (e.g., 3600 seconds = 1 hour)
+        await setWithExpiry(email, JSON.stringify(user), 3); // TTL is 3 seconds
       }
     } else {
       user = JSON.parse(user);
     }
     return user;
   } catch (error) {
-    console.error('Failed to retrieve user:', error.message);
+    console.error("Failed to retrieve user:", error.message);
     throw error;
   }
 };
@@ -77,7 +87,9 @@ const SignIn = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -89,7 +101,9 @@ const SignIn = async (req, res) => {
     // Retrieve user from cache or database
     const user = await getUser(email);
     if (!user) {
-      return res.status(404).json({ message: "User with this email does not exist" });
+      return res
+        .status(404)
+        .json({ message: "User with this email does not exist" });
     }
 
     // Validate password
@@ -108,7 +122,6 @@ const SignIn = async (req, res) => {
   }
 };
 
-
 const ForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -117,16 +130,18 @@ const ForgotPassword = async (req, res) => {
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
-   console.log(email);
+    console.log(email);
     // Find the user by email
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: "No account with that email found." });
+      return res
+        .status(404)
+        .json({ message: "No account with that email found." });
     }
 
     // Generate a random token
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString("hex");
 
     // Set the reset token and expiry on the user object
     user.resetPasswordToken = resetToken;
@@ -137,7 +152,7 @@ const ForgotPassword = async (req, res) => {
 
     // Send email with reset link
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USERNAME,
         pass: process.env.EMAIL_PASSWORD,
@@ -147,19 +162,21 @@ const ForgotPassword = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USERNAME,
       to: email,
-      subject: 'Reset your password',
+      subject: "Reset your password",
       text: `You requested a password reset. Click this link to set a new password: http://example.com/reset/${resetToken}`,
     };
 
     await transporter.sendMail(mailOptions);
 
-    res.status(200).json({ message: "Please check your email for further instructions." });
+    res
+      .status(200)
+      .json({ message: "Please check your email for further instructions." });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "An error occurred. Please try again later." });
+    res
+      .status(500)
+      .json({ message: "An error occurred. Please try again later." });
   }
 };
 
-
-
-export { SignUp, SignIn,ForgotPassword };
+export { SignUp, SignIn, ForgotPassword };
