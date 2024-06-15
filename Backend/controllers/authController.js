@@ -4,6 +4,7 @@ import User from "../models/userSchema.js"; // Update the path to your User mode
 dotenvConfig();
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { get, set } from './redisClient.js';
 
 const SignUp = async (req, res) => {
   try {
@@ -11,9 +12,7 @@ const SignUp = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -23,22 +22,17 @@ const SignUp = async (req, res) => {
     }
 
     // Check password strength
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
-        message:
-          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+        message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
       });
     }
 
-   // Check if the user already exists
+    // Check if the user already exists
     const existingUser = await User.findOne({ email });
-
     if (existingUser) {
-      return res
-        .status(409)
-        .json({ message: "User with this email already exists" });
+      return res.status(409).json({ message: "User with this email already exists" });
     }
 
     // Hash the password
@@ -46,10 +40,7 @@ const SignUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create a new user
-    const user = new User({
-      email,
-      password: hashedPassword,
-    });
+    const user = new User({ email, password: hashedPassword });
 
     // Save the user to the database
     await user.save();
@@ -61,15 +52,32 @@ const SignUp = async (req, res) => {
   }
 };
 
+const getUser = async (email) => {
+  try {
+    let user = await get(email);
+    console.log(user);
+    if (!user) {
+      user = await User.findOne({ email });
+      if (user) {
+        await set(email, JSON.stringify(user));
+      }
+    } else {
+      user = JSON.parse(user);
+    }
+    return user;
+  } catch (error) {
+    console.error('Failed to retrieve user:', error.message);
+    throw error;
+  }
+};
+
 const SignIn = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // Validate input
     if (!(email && password)) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -78,32 +86,28 @@ const SignIn = async (req, res) => {
       return res.status(400).json({ message: "Invalid email address" });
     }
 
-    // Check if the user exists
-    const user = await User.findOne({ email });
-
+    // Retrieve user from cache or database
+    const user = await getUser(email);
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User with this email does not exist" });
+      return res.status(404).json({ message: "User with this email does not exist" });
     }
 
-    // Check password
+    // Validate password
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    // Generate token (assuming you have a function to do so)
+    // const token = generateToken(user.id); // Replace generateToken with your actual token generation logic
 
-    res.status(200).json({ token });
+    res.status(200).json({ message: "Sign in successful" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const ForgotPassword = async (req, res) => {
   try {
