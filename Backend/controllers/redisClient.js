@@ -24,12 +24,19 @@ export const get = async (key) => {
   }
 };
 
-export const set = async (key, value) => {
+export const set = async (key,value,ttlInSeconds) => {
   try {
-    await client.set(key, value);
+    console.log("set reached");
+    await client.set(key, JSON.stringify(value), {
+      EX: ttlInSeconds,
+      NX: true,
+    });
     console.log(`Key ${key} set successfully`);
   } catch (error) {
     console.error(`Error setting key ${key}:`, error);
     throw error;
   }
 };
+
+
+

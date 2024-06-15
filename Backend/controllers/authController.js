@@ -4,7 +4,7 @@ import User from "../models/userSchema.js"; // Update the path to your User mode
 dotenvConfig();
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-import { get, set } from "./redisClient.js";
+import { get , set } from "./redisClient.js";
 
 const SignUp = async (req, res) => {
   try {
@@ -12,9 +12,7 @@ const SignUp = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -36,30 +34,33 @@ const SignUp = async (req, res) => {
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(409)
-        .json({ message: "User with this email already exists" });
+      return res.status(409).json({ message: "User with this email already exists" });
     }
 
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create a new user
-    const user = new User({ email, password: hashedPassword });
+    // Create a new user object (not yet saved to the database)
+    const user = { email, password: hashedPassword };
+
+    // Set the user data in Redis cache with an expiration time of 1 hour (3600 seconds)
+    await set(email, JSON.stringify(user), 'EX', 3);
+    console.log(`User ${email} set in cache with expiration of 1 hour`);
 
     // Save the user to the database
-    await user.save();
+    const newUser = new User(user);
+    await newUser.save();
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-const setWithExpiry = async (key, value, expiryInSeconds) => {
-  await client.setex(key, expiryInSeconds, value);
-};
+
+
+
 
 const getUser = async (email) => {
   try {
@@ -69,7 +70,7 @@ const getUser = async (email) => {
       user = await User.findOne({ email }); // Fetch user from MongoDB if not found in Redis
       if (user) {
         // Set the user data in Redis with a TTL (e.g., 3600 seconds = 1 hour)
-        await setWithExpiry(email, JSON.stringify(user), 3); // TTL is 3 seconds
+        await set(email, JSON.stringify(user), 10);
       }
     } else {
       user = JSON.parse(user);
