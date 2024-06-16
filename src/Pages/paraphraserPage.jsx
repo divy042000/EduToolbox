@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useParaphraseTextMutation } from "../services/paraphraseIt";
-import { copy, linkIcon, loader, tick } from "../assets";
 
 export default function ParaphraserPage() {
   const inputTextareaRef = useRef(null);
@@ -8,10 +6,11 @@ export default function ParaphraserPage() {
   const [inputWordCount, setInputWordCount] = useState(0);
   const [outputWordCount, setOutputWordCount] = useState(0);
   const [copied, setCopied] = useState("");
-  const [paraphraseText, { error, isFetching }] = useParaphraseTextMutation();
   const [allParaphrases, setAllParaphrases] = useState([]);
   const [inputArticle, setInputArticle] = useState("");
   const [outputArticle, setOutputArticle] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const previousArticles = JSON.parse(localStorage.getItem("articles")) || [];
@@ -26,15 +25,44 @@ export default function ParaphraserPage() {
 
   const handleParaphrase = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    console.log("Input Article:", inputArticle);
+
     try {
-       const result = await paraphraseText({ text: inputArticle }).unwrap();
-       const paraphrasedText = result.data.paraphrasedText; // Update to access the paraphrased text from the response
-       setOutputArticle(paraphrasedText);
-       const newArticle = { originalText: inputArticle, paraphrasedText };
-       setAllParaphrases([...allParaphrases, newArticle]);
-       localStorage.setItem("articles", JSON.stringify([...allParaphrases, newArticle]));
+      const response = await fetch("/api/paraphrase", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: inputArticle }],
+          temperature: 1,
+          max_tokens: 500,
+        }),
+      });
+      console.log(response);
+      const text = await response.text(); // Get the response as text first
+
+      const data = JSON.parse(text); // Then try to parse it as JSON
+
+      if (!response.ok) {
+        res.status(response.status).json(data);
+        return;
+      }
+
+      // const data = await response.json();
+      const paraphrasedText = data.choices[0].message.content;
+      setOutputArticle(paraphrasedText);
+      const newArticle = { originalText: inputArticle, paraphrasedText };
+      setAllParaphrases([...allParaphrases, newArticle]);
+      localStorage.setItem("articles", JSON.stringify([...allParaphrases, newArticle]));
     } catch (error) {
-       console.error("Failed to paraphrase text:", error);
+      console.error("Failed to paraphrase text:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,11 +97,13 @@ export default function ParaphraserPage() {
         <div>
           <button
             onClick={handleParaphrase}
-            className="mt-5 px-2 z-10 py-2 bg-sky-500 text-white font-mono italic mb-3 rounded-md  border-2 border-stone-950"
+            className="mt-5 px-2 z-10 py-2 bg-sky-500 text-white font-mono italic mb-3 rounded-md border-2 border-stone-950"
+            disabled={loading}
           >
-            Paraphrase
+            {loading ? "Paraphrasing..." : "Paraphrase"}
           </button>
         </div>
+        {error && <div className="text-red-500 mt-2">{error}</div>}
       </div>
     </div>
   );

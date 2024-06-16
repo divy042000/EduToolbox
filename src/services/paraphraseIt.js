@@ -1,13 +1,37 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+const handler = async (req, res) => {
+const OPEN_AI_API_KEY = process.env.OPEN_AI_API_PARAPHRASER_KEY;
 
-const apiKey = 'a528c4b3b8msh1e354fb52ee483cp1fdd9ejsn34fa98f976c4';
-const apiHost = 'paraphrasing-tool1.p.rapidapi.com';
+  if (req.method !== 'POST') {
+    res.status(405).json({ message: 'Method Not Allowed' });
+    return;
+  }
 
-export const paraphraseApi = createApi({
-    
-});
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPEN_AI_API_KEY}`,
+      },
+      body: JSON.stringify(req.body),
+    });
 
-export const { useParaphraseTextMutation } = paraphraseApi;
+    const data = await response.json();
+
+    if (!response.ok) {
+      res.status(response.status).json(data);
+      return;
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error });
+  }
+};
+
+export default handler;
+
+
 
 
 // const apiKey = import.meta.env.VITE_RAPID_API_PARAPHRASE_KEY;
