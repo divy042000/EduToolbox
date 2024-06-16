@@ -2,7 +2,6 @@ import { config as dotenvConfig } from "dotenv";
 import bcrypt from "bcrypt";
 import User from "../models/userSchema.js"; // Update the path to your User model
 dotenvConfig();
-import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { get, set } from "./redisClient.js";
 
@@ -133,27 +132,27 @@ const ForgotPassword = async (req, res) => {
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
-    console.log(email);
+
     // Find the user by email
     const user = await User.findOne({ email });
 
     if (!user) {
       return res
-        .status(404)
-        .json({ message: "No account with that email found." });
+       .status(404)
+       .json({ message: "No account with that email found." });
     }
 
-    // Generate a random token
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    // Generate a four-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000);
 
-    // Set the reset token and expiry on the user object
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 30000; // Expires in 1 hour
+    // Set the OTP and expiry on the user object
+    user.resetOTP = otp;
+    user.resetOTPExpires = Date.now() + 60000; // Expires in 1 minute
 
     // Save the user object
     await user.save();
 
-    // Send email with reset link
+    // Send email with OTP
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -165,20 +164,20 @@ const ForgotPassword = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USERNAME,
       to: email,
-      subject: "Reset your password",
-      text: `You requested a password reset. Click this link to set a new password: http://example.com/reset/${resetToken}`,
+      subject: "Your OTP for password reset",
+      text: `Your OTP is: ${otp}. Please enter this OTP to reset your password.`,
     };
 
     await transporter.sendMail(mailOptions);
 
     res
-      .status(200)
-      .json({ message: "Please check your email for further instructions." });
+     .status(200)
+     .json({ message: "Please check your email for your OTP." });
   } catch (error) {
     console.error(error);
     res
-      .status(500)
-      .json({ message: "An error occurred. Please try again later." });
+     .status(500)
+     .json({ message: "An error occurred. Please try again later." });
   }
 };
 
