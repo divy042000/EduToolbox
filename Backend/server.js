@@ -10,9 +10,9 @@ import backRoutes from "./routes/backRoutes.js";
 // middle ware
 dotenv.config();
 // Express app setup
-const app = express();
-app.use(express.json());
-app.use(backRoutes);
+  const app = express();
+  app.use(express.json());
+  app.use(backRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URL)
