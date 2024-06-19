@@ -1,5 +1,10 @@
 const handler = async (req, res) => {
-const OPEN_AI_API_KEY = process.env.OPEN_AI_API_PARAPHRASER_KEY;
+const OPEN_AI_API_KEY = 'a528c4b3b8msh1e354fb52ee483cp1fdd9ejsn34fa98f976c4';
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
 
   if (req.method !== 'POST') {
     res.status(405).json({ message: 'Method Not Allowed' });
@@ -7,11 +12,11 @@ const OPEN_AI_API_KEY = process.env.OPEN_AI_API_PARAPHRASER_KEY;
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://paraphrase-genius.p.rapidapi.com/dev/paraphrase/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPEN_AI_API_KEY}`,
+        Authorization: `Bearer a528c4b3b8msh1e354fb52ee483cp1fdd9ejsn34fa98f976c4`,
       },
       body: JSON.stringify(req.body),
     });
