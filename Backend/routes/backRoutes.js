@@ -16,7 +16,7 @@ const router = Router(); // Initialize Express Router
 
 // Define routes
 router.post("/SignUp/user", SignUp); // Use imported functions directly
-router.post("/SignIn/user", SignIn);
+router.post("/SignIn/user",AuthenticateToken,RateLimiter,SignIn);
 router.put("/ForgetPassword/user", ForgotPassword);
 router.get("/protected", AuthenticateToken,RateLimiter, (req, res) => {
   res.json({ message: "This is a protected route", user: req.user });
