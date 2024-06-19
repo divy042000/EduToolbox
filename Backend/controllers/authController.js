@@ -7,7 +7,7 @@ import nodemailer from "nodemailer";
 import { get, set } from "./redisClient.js";
 import express from "express";
 import cookieParser from "cookie-parser";
-
+import RateLimiter from "./tokenBucket.js";
 // creating middle ware
 const app = express();
 app.use(cookieParser());
@@ -31,23 +31,21 @@ const AuthenticateToken = async (req, res, next) => {
   try {
     // Decode the token without verifying the signature
     const decoded = jwt.decode(token);
-    console.log("Decoded token: " + decoded);
+    
     // Check if the token is expired
     const currentTime = Math.floor(Date.now() / 1000);
-    console.log("Current time: " + currentTime);
-    console.log(decoded.iat + 86400)
-    console.log(decoded.iat)
-    if ((decoded.iat + 86400) > currentTime && (decoded.iat) < currentTime) {
+
+    if (decoded.iat + 86400 > currentTime && decoded.iat < currentTime) {
       console.log("Token is within the valid range.");
 
       // Verify the token with the secret
       const verified = jwt.verify(token, process.env.JWT_SECRET);
-      const cachedEmail = await get((verified.email));
-      console.log(cachedEmail);
+      
+      const cachedEmail = await get(verified.email);
+      
       if (!cachedEmail) {
         return res.status(401).json({ message: "Token invalid or expired" });
       }
-
       req.user = { id: decoded.roles, email: decoded.email };
       next();
     } else {
@@ -175,7 +173,7 @@ const SignIn = async (req, res) => {
       aud: "client-id", // Audience - intended recipient of the token
       iat: Math.floor(Date.now() / 1000), // Issued At - current Unix timestamp
       email: email, // Custom claim - user's email
-      roles:"user", // Custom claim - user roles
+      roles: "user", // Custom claim - user roles
     };
 
     const token = jwt.sign(
