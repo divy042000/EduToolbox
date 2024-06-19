@@ -1,52 +1,52 @@
 import express from "express";
 import redis from "redis";
 const app = express();
-import {getFieldValues,hsetAsync} from "./redisClient.js";
+import { getToken, setToken } from "./redisClient.js";
 const bucketSize = 10;
-const refillRate=1;
+const refillRate = 1; // Tokens per minute
 
 const RateLimiter = async (req, res, next) => {
+  try {
     const email = req.user.email;
-    const now = Date.now();
     const userKey = `bucket:${email}`;
-  
-    try {
-      let [tokens, lastRefill] = await getFieldValues(userKey, ['tokens', 'lastRefill']);
-  
-      if (!tokens || !lastRefill) {
-        // Initialize the bucket if it doesn't exist
-        tokens = bucketSize;
-        lastRefill = now;
-      } else {
-        tokens = parseInt(tokens, 10);
-        lastRefill = parseInt(lastRefill, 10);
-  
+    let { tokens, lastRefill } = await getToken(userKey);
+    const bucketSize = 10; // Define the bucket size or set it according to your requirements
+
+    // Initialize the current time in minutes
+    const currentTime = Date.now() / (1000 * 60);
+
+    // Check if the tokens and lastRefill need initialization or refilling
+    if (!tokens && !lastRefill) {
+      // Initialize the bucket if it doesn't exist
+      tokens = bucketSize;
+      lastRefill = currentTime;
+      await setToken(userKey, { tokens, lastRefill });
+      next();
+    } else {
+      // Calculate the time passed since the last refill
+      const timeSinceLastRefill = Math.floor(currentTime - lastRefill);
+
+      if (Date.now() != lastRefill) {
         // Refill the bucket based on the time passed
-        const timeSinceLastRefill = (now - lastRefill) / 1000;
-        const tokensToAdd = Math.floor(timeSinceLastRefill * refillRate);
-        tokens = Math.min(bucketSize, tokens + tokensToAdd);
-        lastRefill = now;
+        // console.log(timeSinceLastRefill);
+        if (tokens > 0) {
+          tokens -= 1; // Deduct one token
+          tokens = Math.min(
+            bucketSize,
+            tokens + Math.floor(timeSinceLastRefill * refillRate)
+          );
+          lastRefill = currentTime;
+          await setToken(userKey, { tokens, lastRefill });
+          next();
+        } else {
+          return res.status(429).json({ message: "Rate limit exceeded" });
+        }
       }
-  
-      // Check if the bucket has enough tokens
-      if (tokens > 0) {
-        tokens--;
-  
-        // Save the updated bucket back to Redis
-        await hsetAsync(userKey, {
-          tokens,
-          lastRefill
-        });
-  
-        next(); // Allow the request
-      } else {
-        res.status(429).send('Rate limit exceeded');
-      }
-    } catch (error) {
-      console.error('Error accessing Redis', error);
-      res.status(500).send('Internal server error');
     }
-  };
+  } catch (error) {
+    console.error("Error accessing Redis", error);
+    res.status(500).send("Internal server error");
+  }
+};
 
-
-export default RateLimiter ;
+export default RateLimiter;

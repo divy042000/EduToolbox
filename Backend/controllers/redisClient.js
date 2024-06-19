@@ -17,43 +17,34 @@ client
   })
   .catch(console.error);
 
-const hmgetAsync = (key, ...fields) => {
-  return new Promise((resolve, reject) => {
-    client.hget(key, fields, (err, replies) => {
-      if (err) {
-        reject(err);
+  export const getToken = async (key) => {
+    try {
+      const token = await client.get(key);
+      console.log(`Got token for key: "${key}"`, token);
+      if (token === null) {
+        // If the token is null, return an object with tokens and lastRefill set to null
+        console.log("Finding null", token);
+        return { tokens: null, lastRefill: null }; // Return an object with named properties
       } else {
-        resolve(replies);
+        // If the token exists, parse it from JSON string to an object
+        console.log(token);
+        return JSON.parse(token); // Assuming the token is a JSON string
       }
-    });
-  });
-};
-
-export const hsetAsync = (key, fieldValues) => {
-  return new Promise((resolve, reject) => {
-    client.hset(key, fieldValues, (err, res) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(res);
-      }
-    });
-  });
-};
-
-export const getFieldValues = async (hashKey, fields) => {
-  try {
-    const result = await hmgetAsync(hashKey, ...fields);
-    console.log(`Field values retrieved for hash key "${hashKey}":`, result);
-    return result;
-  } catch (error) {
-    console.error(
-      `Error retrieving field values for hash key "${hashKey}":`,
-      error
-    );
-    throw error;
-  }
-};
+    } catch (error) {
+      console.error(`Error in getting token: ${key}`, error);
+      throw error; // Rethrow the error to allow calling code to handle it
+    }
+  };
+  export const setToken = async (key, data) => {
+    try {
+      const dataString = JSON.stringify(data); // Convert the data object to a JSON string
+      await client.set(key, dataString); // Store the data in Redis
+      console.log(`Set token for key: "${key}"`, data);
+    } catch (error) {
+      console.error(`Error in setting token: ${key}`, error);
+      throw error; // Rethrow the error to allow calling code to handle it
+    }
+  };
 
 export const get = async (key) => {
   try {

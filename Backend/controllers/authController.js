@@ -31,25 +31,23 @@ const AuthenticateToken = async (req, res, next) => {
   try {
     // Decode the token without verifying the signature
     const decoded = jwt.decode(token);
-    
+
     // Check if the token is expired
     const currentTime = Math.floor(Date.now() / 1000);
 
     if (decoded.iat + 86400 > currentTime && decoded.iat < currentTime) {
-      console.log("Token is within the valid range.");
-
+     
       // Verify the token with the secret
       const verified = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       const cachedEmail = await get(verified.email);
-      
+
       if (!cachedEmail) {
         return res.status(401).json({ message: "Token invalid or expired" });
       }
       req.user = { id: decoded.roles, email: decoded.email };
       next();
     } else {
-      console.log("Token is expired or not within the valid range.");
       return res
         .status(401)
         .json({ message: "Token expired or not issued recently enough" });
