@@ -1,17 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useParaphraseTextMutation } from "../services/paraphraseIt";
-import { copy, linkIcon, loader, tick } from "../assets";
+import { paraphraseText } from "../../Backend/services/paraphraseIt";
 
 export default function ParaphraserPage() {
   const inputTextareaRef = useRef(null);
   const outputTextareaRef = useRef(null);
   const [inputWordCount, setInputWordCount] = useState(0);
   const [outputWordCount, setOutputWordCount] = useState(0);
-  const [copied, setCopied] = useState("");
-  const [paraphraseText, { error, isFetching }] = useParaphraseTextMutation();
   const [allParaphrases, setAllParaphrases] = useState([]);
   const [inputArticle, setInputArticle] = useState("");
   const [outputArticle, setOutputArticle] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const previousArticles = JSON.parse(localStorage.getItem("articles")) || [];
@@ -26,20 +25,32 @@ export default function ParaphraserPage() {
 
   const handleParaphrase = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    console.log(inputArticle);
+
     try {
-       const result = await paraphraseText({ text: inputArticle }).unwrap();
-       const paraphrasedText = result.data.paraphrasedText; // Update to access the paraphrased text from the response
-       setOutputArticle(paraphrasedText);
-       const newArticle = { originalText: inputArticle, paraphrasedText };
-       setAllParaphrases([...allParaphrases, newArticle]);
-       localStorage.setItem("articles", JSON.stringify([...allParaphrases, newArticle]));
+      const paraphrasedText = await paraphraseText(inputArticle);
+      setOutputArticle(paraphrasedText);
+      setOutputWordCount(paraphrasedText.split(/\s+/).filter(Boolean).length);
+
+      const newArticle = { originalText: inputArticle, paraphrasedText };
+      setAllParaphrases([...allParaphrases, newArticle]);
+      localStorage.setItem("articles", JSON.stringify([...allParaphrases, newArticle]));
     } catch (error) {
-       console.error("Failed to paraphrase text:", error);
+      console.error("Failed to paraphrase text:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col w-full pointer-events-auto">
+      <h1 className="head_text">
+        Your own Writing Companion<br className="max-md:hidden" />
+        <span className="blue_gradient">Genius Paraphraser</span>
+      </h1>
       <div className="flex flex-col items-center">
         <div className="flex flex-row justify-center w-full z-10 grid-cols-1 mt-5 gap-4">
           <div className="w-2/5 mt-5 mb-5">
@@ -69,11 +80,20 @@ export default function ParaphraserPage() {
         <div>
           <button
             onClick={handleParaphrase}
-            className="mt-5 px-2 z-10 py-2 bg-sky-500 text-white font-mono italic mb-3 rounded-md  border-2 border-stone-950"
+            className="mt-5 px-2 z-10 py-2 bg-blue-500 text-white font-mono italic mb-3 rounded-md border-2 border-stone-950"
+            disabled={loading}
           >
-            Paraphrase
+            {loading ? "Paraphrasing..." : "Paraphrase It"}
           </button>
         </div>
+        <button
+          type="button"
+          className="black_btn"
+          onClick={() => window.open('https://github.com/hhchoksi')}
+        >
+          Github
+        </button>
+        {error && <div className="text-red-500 mt-2">{error}</div>}
       </div>
     </div>
   );
