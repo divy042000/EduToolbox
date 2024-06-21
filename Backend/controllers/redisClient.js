@@ -59,7 +59,7 @@ export const get = async (key) => {
 
 export const set = async (key, value, ttlInSeconds) => {
   try {
-    await client.set(key, JSON.stringify(value), {
+    await client.set(key,(value), {
       EX: ttlInSeconds,
       NX: true,
     });
