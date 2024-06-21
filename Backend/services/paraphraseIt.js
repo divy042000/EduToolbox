@@ -1,6 +1,6 @@
-const RAPIDAPI_HOST = "paraphrase-genius.p.rapidapi.com";
-const RAPIDAPI_KEY = "a528c4b3b8msh1e354fb52ee483cp1fdd9ejsn34fa98f976c4";
-const API_URL = "https://paraphrase-genius.p.rapidapi.com/dev/paraphrase/";
+const RAPIDAPI_HOST = "";
+const RAPIDAPI_KEY = "";
+const API_URL = "";
 
 export const paraphraseText = async (text) => {
   const response = await fetch(API_URL, {
