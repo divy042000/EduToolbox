@@ -10,6 +10,17 @@ import cookieParser from "cookie-parser";
 dotenvConfig();
 const app = express();
 app.use(cookieParser());
+app.use(express.json());
+
+console.log(process.env.MONGODB_URL);
+mongoose.connect(process.env.MONGODB_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log("Connected to MongoDB");
+}).catch((error) => {
+  console.error("Error connecting to MongoDB", error);
+});
 
 const AuthenticateToken = async (req, res, next) => {
   // Check if the token is in the 'Authorization' header
@@ -63,9 +74,7 @@ const SignUp = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -75,21 +84,17 @@ const SignUp = async (req, res) => {
     }
 
     // Check password strength
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
-        message:
-          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+        message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
       });
     }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(409)
-        .json({ message: "User with this email already exists" });
+      return res.status(409).json({ message: "User with this email already exists" });
     }
 
     // Hash the password
