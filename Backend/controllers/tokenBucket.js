@@ -2,7 +2,8 @@ import express from "express";
 import redis from "redis";
 const app = express();
 import { getToken, setToken } from "./redisClient.js";
-const bucketSize = 10;
+
+const bucketSize = 10; // Define the bucket size or set it according to your requirements
 const refillRate = 1; // Tokens per minute
 
 const RateLimiter = async (req, res, next) => {
@@ -10,7 +11,6 @@ const RateLimiter = async (req, res, next) => {
     const email = req.user.email;
     const userKey = `bucket:${email}`;
     let { tokens, lastRefill } = await getToken(userKey);
-    const bucketSize = 10; // Define the bucket size or set it according to your requirements
 
     // Initialize the current time in minutes
     const currentTime = Date.now() / (1000 * 60);
@@ -24,18 +24,20 @@ const RateLimiter = async (req, res, next) => {
       next();
     } else {
       // Calculate the time passed since the last refill
-      const timeSinceLastRefill = Math.floor(currentTime - lastRefill);
 
-      if (Date.now() != lastRefill) {
+      if (currentTime != lastRefill) {
         // Refill the bucket based on the time passed
         // console.log(timeSinceLastRefill);
-        if (tokens > 0) {
-          tokens -= 1; // Deduct one token
+        const timeSinceLastRefill = Math.floor(currentTime - lastRefill);
+        if (timeSinceLastRefill > 0) {
           tokens = Math.min(
             bucketSize,
             tokens + Math.floor(timeSinceLastRefill * refillRate)
           );
           lastRefill = currentTime;
+        }
+        if (tokens > 0) {
+          tokens -= 1; // Deduct one token
           await setToken(userKey, { tokens, lastRefill });
           next();
         } else {

@@ -1,14 +1,13 @@
 import { config as dotenvConfig } from "dotenv";
 import bcrypt from "bcrypt";
 import User from "../models/userSchema.js"; // Update the path to your User model
-dotenvConfig();
-import jwt, { decode } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { get, set } from "./redisClient.js";
 import express from "express";
 import cookieParser from "cookie-parser";
-import RateLimiter from "./tokenBucket.js";
 // creating middle ware
+dotenvConfig();
 const app = express();
 app.use(cookieParser());
 
