@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import cors from "cors";
 
 // import { createClient } from 'redis';
 import backRoutes from "./routes/backRoutes.js";
@@ -13,6 +14,11 @@ dotenv.config();
   const app = express();
   app.use(express.json());
   app.use(backRoutes);
+  app.use(cors({
+    origin: 'http://localhost:4173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Authorization', 'Content-Type'],
+  }));
 
 mongoose
   .connect(process.env.MONGODB_URL)
