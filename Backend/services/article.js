@@ -1,27 +1,26 @@
+import { config as dotenvConfig } from "dotenv";
+dotenvConfig();
+import axios from "axios";
+const rapidApiKey = process.env.VITE_RAPID_API_ARTICLE_KEY;
+const rapidApiHost=process.env.VITE_RAPID_API_ARTICLE_HOST;
 
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+    
+export const getArticleSummary = async (articleUrl, length = 3) => {
+    try {
+        const response = await axios.get(`https://${rapidApiHost}/summarize`, {
+            params: {
+                url: encodeURIComponent(articleUrl),
+                length: length
+            },
+            headers: {
+                'X-RapidAPI-Key': rapidApiKey,
+                'X-RapidAPI-Host': rapidApiHost
+            }
+        });
 
-const rapidApiKey = import.meta.env.VITE_RAPID_API_ARTICLE_KEY;
-const rapidApiHost=import.meta.env.VITE_RAPID_API_ARTICLE_HOST;
-
-export const articleApi = createApi({
-    reducerPath: 'articleApi',
-    baseQuery: fetchBaseQuery({
-        baseUrl: 'https://article-extractor-and-summarizer.p.rapidapi.com/',
-        prepareHeaders: (headers) => {
-            headers.set('X-RapidAPI-Key', rapidApiKey);
-            headers.set('X-RapidAPI-Host', rapidApiHost);
-
-            return headers;
-        },
-    }),
-    endpoints: (builder) => ({
-        getSummary: builder.query({
-            // encodeURIComponent() function encodes special characters that may be present in the parameter values
-            // If we do not properly encode these characters, they can be misinterpreted by the server and cause errors or unexpected behavior. Thus that RTK bug
-            query: (params) => `summarize?url=${encodeURIComponent(params.articleUrl)}&length=3`,
-        }),
-    }),
-})
-
-export const { useLazyGetSummaryQuery } = articleApi
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching article summary:', error);
+        throw error;
+    }
+};
