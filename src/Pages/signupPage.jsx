@@ -1,47 +1,59 @@
 import axios from "axios";
 import bcrypt from "bcryptjs";
-
-
+import ErrorToast from "../components/errorComponent";
+import SuccessToast from "../components/sucessComponent";
+import { useState } from "react";
 export default function SignUpPage() {
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const handleSubmit = async (event) => {
     event.preventDefault();
     console.log("Button Pressed");
 
     // Get form data
     const formData = new FormData(event.target);
-    const email = formData.get('email');
-    const password = formData.get('password');
+    const email = formData.get("email");
+    const password = formData.get("password");
 
-        // Validate email format
-        const emailRegex = /\S+@\S+\.\S+/;
-        if (!emailRegex.test(email)) {
-            alert("Invalid email address.");
-            return;
-        }
-    
+    if (!email || !password) {
+      setErrorMessage("Email and password are required.");
+    }
+
+    // Validate email format
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage("Invalid email address.");
+    }
+
     // Password validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
-        alert("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
-        return;
+      setErrorMessage(
+        "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+      );
     }
 
     try {
-        // Hash the password before sending it to the backend
-        const hashedPassword = await bcrypt.hash(password, 10);
+      // Hash the password before sending it to the backend
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-        const response = await axios.post("http://localhost:4000/SignUp/user", {
-            email,
-            password: hashedPassword,
-        });
-
-        console.log(response.data);
-        alert("Sign up successful!");
+      const response = await axios.post("http://localhost:4000/SignUp/user", {
+        email,
+        password: hashedPassword,
+      });
+      // Check if response status is 201 (Created) and show success message
+      if (response.status === 201) {
+        setSuccessMessage("User registered successfully");
+      }
     } catch (error) {
-        console.error(error.response?.data || error.message);
-        alert("An error occurred during sign up.");
+      // Capture the error response from the backend
+      const errorResponse =
+        error.response?.data?.message || "An error occurred during sign up.";
+      console.error(errorResponse);
+      setErrorMessage(errorResponse);
     }
-};
+  };
 
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
@@ -121,6 +133,8 @@ export default function SignUpPage() {
           </a>
         </p>
       </div>
+      {errorMessage && <ErrorToast message={errorMessage} />}
+      {successMessage && <SuccessToast message={successMessage} />}
     </div>
   );
 }
