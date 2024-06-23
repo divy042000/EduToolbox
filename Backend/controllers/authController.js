@@ -67,19 +67,7 @@ const SignUp = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Validate email format
-    const emailRegex = /\S+@\S+\.\S+/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email address" });
-    }
-
-    // Check password strength
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
-      });
-    }
+    
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
@@ -88,11 +76,9 @@ const SignUp = async (req, res) => {
     }
 
     // Hash the password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create a new user object (not yet saved to the database)
-    const user = { email, password: hashedPassword };
+    const user = { email, password: password };
 
     // Save the user to the database
     const newUser = new User(user);

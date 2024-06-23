@@ -2,8 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
-
-// import { createClient } from 'redis';
 import backRoutes from "./routes/backRoutes.js";
 
 // Load environment variables
@@ -11,14 +9,14 @@ import backRoutes from "./routes/backRoutes.js";
 // middle ware
 dotenv.config();
 // Express app setup
-const app = express();
-app.use(express.json());
-
-app.use(cors({
-  origin: 'http://localhost:4173',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Authorization', 'Content-Type'],
-}));
+  const app = express();
+  app.use(express.json());
+  app.use(cors({
+    origin: "http://localhost:5173",
+  methods: "GET,PUT,POST,DELETE",
+    allowedHeaders: ['Authorization', 'Content-Type'],
+  }));
+  app.use(backRoutes);
 
 app.use(backRoutes);
 
