@@ -12,8 +12,8 @@ dotenv.config();
   const app = express();
   app.use(express.json());
   app.use(cors({
-    origin: "http://localhost:5173",
-  methods: "GET,PUT,POST,DELETE",
+    origin: "http://localhost:4173",
+    methods: "GET,PUT,POST,DELETE",
     allowedHeaders: ['Authorization', 'Content-Type'],
   }));
   app.use(backRoutes);
