@@ -11,14 +11,16 @@ import backRoutes from "./routes/backRoutes.js";
 // middle ware
 dotenv.config();
 // Express app setup
-  const app = express();
-  app.use(express.json());
-  app.use(backRoutes);
-  app.use(cors({
-    origin: 'http://localhost:4173',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Authorization', 'Content-Type'],
-  }));
+const app = express();
+app.use(express.json());
+
+app.use(cors({
+  origin: 'http://localhost:4173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+}));
+
+app.use(backRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URL)
