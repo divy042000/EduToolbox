@@ -3,9 +3,10 @@ import bcrypt from "bcrypt";
 import User from "../models/userSchema.js"; // Update the path to your User model
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import { get, set } from "./redisClient.js";
+import { get, set, del } from "./redisClient.js";
 import express from "express";
 import cookieParser from "cookie-parser";
+
 // creating middle ware
 dotenvConfig();
 const app = express();
@@ -125,9 +126,7 @@ const SignIn = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -139,9 +138,7 @@ const SignIn = async (req, res) => {
     // Authenticate user
     const user = await getUser(email, password);
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User with this email does not exist" });
+      return res.status(404).json({ message: "User with this email does not exist" });
     }
 
     // Generate JWT
@@ -162,9 +159,8 @@ const SignIn = async (req, res) => {
 
     // Cache user details in Redis
     await set(email, token, process.env.AUTH_TTL);
-    console.log(
-      `User ${email} set in cache with expiration of ${process.env.AUTH_TTL} seconds`
-    );
+    console.log(`User ${email} set in cache with expiration of ${process.env.AUTH_TTL} seconds`);
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // Use secure cookies in production
@@ -173,7 +169,7 @@ const SignIn = async (req, res) => {
 
     res.status(200).json({ message: "Sign in successful" });
   } catch (error) {
-    console.log(error);
+    console.error("Sign in error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -233,4 +229,36 @@ const ForgotPassword = async (req, res) => {
   }
 };
 
-export { SignUp, SignIn, ForgotPassword, AuthenticateToken };
+const Logout = async (req, res) => {
+  try {
+    // Clear the JWT cookie
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production"
+    });
+
+    // Optionally, remove the user's token from Redis if you're storing it there
+    const authHeader = req.headers["authorization"];
+    let token;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+
+    if (token) {
+      const decoded = jwt.decode(token);
+      if (decoded && decoded.email) {
+        // Remove token from Redis
+        await del(decoded.email);
+      }
+    }
+
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export { SignUp, SignIn, Logout, ForgotPassword, AuthenticateToken };
+

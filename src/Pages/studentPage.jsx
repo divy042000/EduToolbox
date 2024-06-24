@@ -3,7 +3,7 @@ import { Dialog } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 const navigation = [
-  { name: 'Paraphraser', href:'/textParaphraser' },
+  { name: 'Paraphraser', href: '/textParaphraser' },
   { name: 'Text To Speech', href: '/text-to-speech' },
   { name: 'AI Summarizer', href: '/summarizerPage' },
   { name: 'About', href: '/aboutPage' },
@@ -11,14 +11,20 @@ const navigation = [
 
 export default function Example() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  const handleLogout = () => {
+    // Perform logout logic here (e.g., clear tokens, update state, etc.)
+    setIsAuthenticated(false)
+  }
 
   return (
     <div className="bg-white">
       <header className="fixed inset-x-0 top-0 z-50 rounded-md backdrop-filter backdrop-blur-lg bg-opacity-10">
-        <nav className=" flex items-center justify-between p-6 lg:px-8 " aria-label="Global">
+        <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
           <div className="flex lg:flex-1">
-            <a href="/StudentPage" className="-m-1.5 p-1.5 flex flex-row gap-2  rounded-md">
-            <span className="text-lg font-semibold subpixel-antialiased font-mono text-blue-500 hover:text-blue-700">Study Buddy</span>
+            <a href="/StudentPage" className="-m-1.5 p-1.5 flex flex-row gap-2 rounded-md">
+              <span className="text-lg font-semibold subpixel-antialiased font-mono text-blue-500 hover:text-blue-700">Study Buddy</span>
               <img
                 className="h-8 w-auto"
                 src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
@@ -44,15 +50,21 @@ export default function Example() {
             ))}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-4">
-            <a href="/SignUpPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
-              Sign Up <span aria-hidden="true">&rarr;</span>
-            </a>
-            
-            <a href="/SignInPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
-              Sign In <span aria-hidden="true">&rarr;</span>
-            </a>
+            {isAuthenticated ? (
+              <button onClick={handleLogout} className="text-sm font-semibold font-mono leading-6 text-gray-900">
+                Logout <span aria-hidden="true">&rarr;</span>
+              </button>
+            ) : (
+              <>
+                <a href="/SignUpPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
+                  Sign Up <span aria-hidden="true">&rarr;</span>
+                </a>
+                <a href="/SignInPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
+                  Sign In <span aria-hidden="true">&rarr;</span>
+                </a>
+              </>
+            )}
           </div>
-          
         </nav>
         <Dialog className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
           <div className="fixed inset-0 z-50" />
@@ -89,18 +101,29 @@ export default function Example() {
                   ))}
                 </div>
                 <div className="py-6">
-                  <a
-                    href="/SignUpPage"
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                  >
-                    Sign Up
-                  </a>
-                  <a
-                    href="/SignUpPage"
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                  >
-                    Log in
-                  </a>
+                  {isAuthenticated ? (
+                    <button
+                      onClick={handleLogout}
+                      className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                    >
+                      Logout
+                    </button>
+                  ) : (
+                    <>
+                      <a
+                        href="/SignUpPage"
+                        className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      >
+                        Sign Up
+                      </a>
+                      <a
+                        href="/SignInPage"
+                        className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      >
+                        Sign In
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -136,9 +159,8 @@ export default function Example() {
               Student Hackable Page
             </h1>
             <p className="mt-6 font-mono -lg font-bold leading-8 text-gray-600">
-            Comprehensive platform: Paraphrase, Text-to-Speech, Article Summarization, and more, all in one destination. Simplify your tasks efficiently.
+              Comprehensive platform: Paraphrase, Text-to-Speech, Article Summarization, and more, all in one destination. Simplify your tasks efficiently.
             </p>
-            
           </div>
         </div>
         <div

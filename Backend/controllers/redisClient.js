@@ -70,3 +70,13 @@ export const set = async (key, value, ttlInSeconds) => {
     throw error;
   }
 };
+
+export const del = async (key) => {
+  try {
+    await client.del(key);
+    console.log(`Key ${key} deleted successfully`);
+  } catch (error) {
+    console.error(`Error deleting key ${key}:`, error);
+    throw error;
+  }
+};
