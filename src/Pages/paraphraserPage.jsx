@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { paraphraseText } from "../../Backend/services/paraphraseIt";
+import ErrorToast from "../components/errorComponent";
 
 export default function ParaphraserPage() {
   const inputTextareaRef = useRef(null);
@@ -10,33 +11,29 @@ export default function ParaphraserPage() {
   const [inputArticle, setInputArticle] = useState("");
   const [outputArticle, setOutputArticle] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(""); 
 
-  useEffect(() => {
-    const previousArticles = JSON.parse(localStorage.getItem("articles")) || [];
-    setAllParaphrases(previousArticles);
-  }, []);
-
-  const handleTextChange = (e) => {
-    const counts = e.target.value.split(/\s+/).filter(Boolean).length;
-    setInputWordCount(counts);
-    setInputArticle(e.target.value);
-  };
 
   const handleParaphrase = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    console.log(inputArticle);
-
+    setError("");
+  
     try {
       const paraphrasedText = await paraphraseText(inputArticle);
+      
+      // Check word limit
+      const wordLimit = 100;
+      const words = paraphrasedText.split(/\s+/).filter(Boolean);
+      if (words.length > wordLimit) {
+        throw new Error(`Paraphrased text exceeds ${wordLimit} words.`);
+      }
+  
       setOutputArticle(paraphrasedText);
-      setOutputWordCount(paraphrasedText.split(/\s+/).filter(Boolean).length);
-
+      setOutputWordCount(words.length);
+  
       const newArticle = { originalText: inputArticle, paraphrasedText };
       setAllParaphrases([...allParaphrases, newArticle]);
-      localStorage.setItem("articles", JSON.stringify([...allParaphrases, newArticle]));
     } catch (error) {
       console.error("Failed to paraphrase text:", error);
       setError(error.message);
@@ -44,11 +41,12 @@ export default function ParaphraserPage() {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="flex flex-col w-full pointer-events-auto">
       <h1 className="head_text">
-        Your own Writing Companion<br className="max-md:hidden" />
+        Your own Writing Companion
+        <br className="max-md:hidden" />
         <span className="blue_gradient">Genius Paraphraser</span>
       </h1>
       <div className="flex flex-col items-center">
@@ -89,7 +87,7 @@ export default function ParaphraserPage() {
         <button
           type="button"
           className="black_btn"
-          onClick={() => window.open('https://github.com/hhchoksi')}
+          onClick={() => window.open("https://github.com/hhchoksi")}
         >
           Github
         </button>
