@@ -48,7 +48,7 @@ export default function Example() {
               Sign Up <span aria-hidden="true">&rarr;</span>
             </a>
             
-            <a href="/SignUpPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
+            <a href="/SignInPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
               Sign In <span aria-hidden="true">&rarr;</span>
             </a>
           </div>
