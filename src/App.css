@@ -126,7 +126,7 @@ position: absolute;
 
 
 .head_text {
-  @apply mt-5 text-3xl font-extrabold leading-[1.15] text-black sm:text-6xl text-center;
+  @apply mt-5 text-xl  font-extrabold leading-[1.15] text-black sm:text-6xl text-center;
 }
 .second_head_text {
   @apply mt-5 text-xl font-extrabold leading-[1.15] text-black sm:text-6xl text-center;
