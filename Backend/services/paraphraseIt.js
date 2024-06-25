@@ -30,3 +30,4 @@ export const ParaphraserService = async (text) => {
     throw new Error(error.message);
   }
 };
+

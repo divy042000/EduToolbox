@@ -29,10 +29,17 @@ export default function SignInPage() {
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/SignIn/user", {
+      const response = await axios.post("http://localhost:4000/SignIn/user", {
         email,
         password,
+      }, {
+        headers: {
+          // Example header(s)
+          'Authorization': 'Bearer YOUR_TOKEN_HERE',
+          'Content-Type': 'application/json'
+        }
       });
+      
       console.log(response.data);
       setSuccessMessage("Sign in successful!");
       setErrorMessage("");
