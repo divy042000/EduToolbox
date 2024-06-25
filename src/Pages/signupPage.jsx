@@ -38,14 +38,13 @@ export default function SignUpPage() {
       // Hash the password before sending it to the backend
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      const response = await axios.post("http://localhost:4000/SignUp/user", {
-        email,
-        password: hashedPassword,
-      });
-      // Check if response status is 201 (Created) and show success message
-      if (response.status === 201) {
-        setSuccessMessage("User registered successfully");
-      }
+        const response = await axios.post("http://localhost:3000/SignUp/user", {
+            email,
+            password: hashedPassword,
+        });
+
+        console.log(response.data);
+        alert("Sign up successful!");
     } catch (error) {
       // Capture the error response from the backend
       const errorResponse =
@@ -92,14 +91,6 @@ export default function SignUpPage() {
               >
                 Password
               </label>
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-semibold text-indigo-600 hover:text-indigo-500"
-                >
-                  Forgot password?
-                </a>
-              </div>
             </div>
             <div className="mt-2">
               <input
