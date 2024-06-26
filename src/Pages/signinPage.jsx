@@ -10,39 +10,40 @@ export default function SignInPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     console.log("Button Pressed");
-
+  
     // Get form data
     const formData = new FormData(event.target);
     const email = formData.get("email");
     const password = formData.get("password");
-
-    if (!email || !password) {
+  
+    if (!email ||!password) {
       setErrorMessage("Email and password are required.");
       return;
     }
-
+  
     // Validate email format
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       setErrorMessage("Invalid email address.");
       return;
     }
-
+  
     try {
-      const response = await axios.post("http://localhost:4000/SignIn/user", {
+      // Attempt to authenticate the user
+      const authResponse = await axios.post("http://localhost:4000/SignIn/user", {
         email,
         password,
-      }, {
-        headers: {
-          // Example header(s)
-          'Authorization': 'Bearer YOUR_TOKEN_HERE',
-          'Content-Type': 'application/json'
-        }
       });
+  
+      // On success, store the received token in Session Storage
+      sessionStorage.setItem('authToken', authResponse.data.token); // Adjust according to your response structure
       
-      console.log(response.data);
+      console.log(authResponse.data);
       setSuccessMessage("Sign in successful!");
       setErrorMessage("");
+  
+      // Optionally, redirect the user or perform further actions
+      // For demonstration purposes, we'll just log the response data
     } catch (error) {
       const errorResponse =
         error.response?.data?.message || "An error occurred during sign in.";
@@ -50,6 +51,7 @@ export default function SignInPage() {
       setErrorMessage(errorResponse);
     }
   };
+  
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">

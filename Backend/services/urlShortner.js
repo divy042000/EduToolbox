@@ -30,14 +30,14 @@ export const UrlShortner = async (req, res) => {
         const baseUrl = process.env.BASE_URL;
         const shortUrl = `${baseUrl}/${id2}`; // Fixed template literal syntax
         console.log(shortUrl);
-        set(LongUrl, shortUrl, process.env.URL_TTL);await Url.save({ LongUrl, shortUrl, Date: Date.now() }); // Correct usage of save()
+        set(LongUrl, shortUrl, process.env.URL_TTL);
+        await Url.save({ LongUrl, shortUrl, Date: Date.now() }); // Correct usage of save()
         res.json({ LongUrl, shortUrl, Date: Date.now() }); // No change needed here
-        
       }
     } else {
       // If cacheUrl exists, respond with the cacheUrl object
       console.log(cacheUrl);
-      res.json({LongUrl:cacheUrl});
+      res.json({ LongUrl: cacheUrl });
     }
   } catch (err) {
     console.error(err);

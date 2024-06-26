@@ -41,9 +41,18 @@ export default function ParaphraserPage() {
       // Check if the input word count is greater than or equal to 20
       if (inputWordCount >= 20) {
         console.log("Process called")
-        const response = await axios.post('http://localhost:4000/Paraphrase/user',{
+         // Retrieve the token from Session Storage
+         const authToken = sessionStorage.getItem('authToken');
+         console.log(authToken);
+         const response = await axios.post('http://localhost:4000/Paraphrase/user', {
           text: inputArticle,
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`, // Replace authToken with the actual token value
+            'Content-Type': 'application/json'
+          }
         });
+        
         
         const paraphrasedText = response.data.paraphrasedText;
   

@@ -27,7 +27,7 @@ const AuthenticateToken = async (req, res, next) => {
       .status(401)
       .json({ message: "Access denied. No token provided." });
   }
-  console.log("Token: " + token);
+  
 
   try {
     // Decode the token without verifying the signature
@@ -161,11 +161,11 @@ const SignIn = async (req, res) => {
     await set(email, token, process.env.AUTH_TTL);
     console.log(`User ${email} set in cache with expiration of ${process.env.AUTH_TTL} seconds`);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-      maxAge: process.env.TOKEN_TTL, // 1 hour
-    });
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+    //   maxAge: process.env.TOKEN_TTL, // 1 hour
+    // });
 
     res.status(200).json({ message: "Sign in successful" });
   } catch (error) {
