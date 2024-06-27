@@ -10,38 +10,38 @@ export default function SignInPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     console.log("Button Pressed");
-  
+
     // Get form data
     const formData = new FormData(event.target);
     const email = formData.get("email");
     const password = formData.get("password");
-  
-    if (!email ||!password) {
+
+    if (!email || !password) {
       setErrorMessage("Email and password are required.");
       return;
     }
-  
+
     // Validate email format
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       setErrorMessage("Invalid email address.");
       return;
     }
-  
+
     try {
       // Attempt to authenticate the user
-      const authResponse = await axios.post("http://localhost:4000/SignIn/user", {
-        email,
-        password,
-      });
-  
-      // On success, store the received token in Session Storage
-      sessionStorage.setItem('authToken', authResponse.data.token); // Adjust according to your response structure
-      
-      console.log(authResponse.data);
+      const authResponse = await axios.post(
+        "http://localhost:4000/SignIn/user",
+        {
+          email,
+          password,
+        }
+      );
+      console.log(authResponse);
+      sessionStorage.setItem("authToken", authResponse.data.token); // Adjust according to your response structure
       setSuccessMessage("Sign in successful!");
       setErrorMessage("");
-  
+
       // Optionally, redirect the user or perform further actions
       // For demonstration purposes, we'll just log the response data
     } catch (error) {
@@ -51,7 +51,7 @@ export default function SignInPage() {
       setErrorMessage(errorResponse);
     }
   };
-  
+
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
@@ -68,7 +68,10 @@ export default function SignInPage() {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form className="space-y-6" onSubmit={handleSubmit} method="POST">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
               Email address
             </label>
             <div className="mt-2">
@@ -85,11 +88,17 @@ export default function SignInPage() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
                 Password
               </label>
               <div className="text-sm">
-                <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                <a
+                  href="#"
+                  className="font-semibold text-indigo-600 hover:text-indigo-500"
+                >
                   Forgot password?
                 </a>
               </div>
@@ -117,8 +126,11 @@ export default function SignInPage() {
         </form>
 
         <p className="mt-10 text-center text-sm text-gray-500">
-          Not a member?{' '}
-          <a href="#" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+          Not a member?{" "}
+          <a
+            href="#"
+            className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+          >
             Start a 14 day free trial
           </a>
         </p>
