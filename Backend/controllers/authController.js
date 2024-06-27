@@ -5,17 +5,18 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { get, set, del } from "./redisClient.js";
 import express from "express";
-import cookieParser from "cookie-parser";
+
 import Log from "../models/logSchema.js";
 // creating middle ware
 dotenvConfig();
 const app = express();
-app.use(cookieParser());
+
 app.use(express.json());
 
 
 const AuthenticateToken = async (req, res, next) => {
   // Check if the token is in the 'Authorization' header
+  
   const authHeader = req.headers["authorization"];
   let token;
 
@@ -42,12 +43,12 @@ const AuthenticateToken = async (req, res, next) => {
         // Verify the token with the secret
         const verified = jwt.verify(token, process.env.JWT_SECRET);
         const cachedEmail = await get(verified.email);
-
+        console.log(cachedEmail);
         if (!cachedEmail) {
           try {
             // Query MongoDB for the user document using the token
             const user = await User.findOne({ email: verified.email });
-
+            console.log("Token expired"); 
             if (!user) {
               return res
                 .status(401)
@@ -55,14 +56,18 @@ const AuthenticateToken = async (req, res, next) => {
             }
             user.lastLogin = Date.now();
             await user.save();
-
             // Proceed with your logic here
             res.status(200).json({ message: "Authenticated successfully" });
-            next();
+            console.log("Next Reached")
           } catch (error) {
             console.error("Error querying MongoDB:", error);
             res.status(500).json({ message: "Internal server error" });
           }
+        }
+        else{
+          res.status(200).json({ message: "Authenticated successfully" });
+          console.log("Next Reached");
+          next();
         }
       } catch (error) {
         console.error("JWT verification failed:", error.message);
@@ -117,7 +122,7 @@ const SignUp = async (req, res) => {
 const getUser = async (email, password) => {
   try {
     let user = await get(email); // Retrieve the user from Redis
-
+   
     if (!user) {
       user = await User.findOne({ email }); // Fetch user from MongoDB if not found in Redis
       if (user) {
