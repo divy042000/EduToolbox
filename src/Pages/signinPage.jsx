@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import ErrorToast from "../components/errorComponent";
-import SuccessToast from "../components/sucessComponent";
+import SuccessToast from "../components/successComponent";
 
 export default function SignInPage() {
   const [errorMessage, setErrorMessage] = useState("");
