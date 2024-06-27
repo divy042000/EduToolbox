@@ -14,7 +14,6 @@ const RateLimiter = async (req, res, next) => {
 
     // Initialize the current time in minutes
     const currentTime = Date.now() / (1000 * 60);
-
     // Check if the tokens and lastRefill need initialization or refilling
     if (!tokens && !lastRefill) {
       // Initialize the bucket if it doesn't exist

@@ -37,9 +37,20 @@ const AISummarizer = () => {
 
     try {
       setIsFetching(true);
-      const response = await axios.post("/api/getSummary", {
-        articleUrl: article.url,
-      });
+      const authToken = sessionStorage.getItem("authToken");
+      console.log(authToken);
+      const response = await axios.post(
+        "http://localhost:4000/AISummarizer/user",
+        {
+          articleUrl: article.url,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`, // Replace authToken with the actual token value
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const { data } = response;
 
