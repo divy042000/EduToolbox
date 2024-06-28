@@ -119,7 +119,7 @@ export default function ParaphraserPage() {
           <button
             type="button"
             className="black_btn"
-            onClick={() => window.open("")}
+            onClick={() => window.open("https://github.com/hhchoksi")}
           >
             Github
           </button>

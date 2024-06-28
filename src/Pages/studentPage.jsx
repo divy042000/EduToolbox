@@ -6,6 +6,7 @@ const navigation = [
   { name: 'Paraphraser', href: '/textParaphraser' },
   { name: 'Text To Speech', href: '/text-to-speech' },
   { name: 'AI Summarizer', href: '/summarizerPage' },
+  
   { name: 'About', href: '/aboutPage' },
 ]
 

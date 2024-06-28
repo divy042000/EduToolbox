@@ -10,6 +10,7 @@ import AboutPage from './Pages/aboutPage';
 import SignUpPage from './Pages/signupPage';
 import SignInPage from './Pages/signinPage';
 import MoreFeatures from './Pages/moreFeatures';
+import FlowRenderer from './Pages/mindmapPage';
 function App() {
   return (
     <Router>
@@ -21,6 +22,7 @@ function App() {
         <Route path="/aboutPage" element={<AboutPage/>} />
         <Route path="/SignUpPage" element={<SignUpPage/>}/>
         <Route path="/SignInPage" element={<SignInPage/>}/>
+        <Route path="/mindmapPage" element={<FlowRenderer/>}/>
         <Route path="/moreFeatures" element={<MoreFeatures/>}/>
         <Route path="*" element={<ErrorPage />} />      
         </Routes>

@@ -38,7 +38,7 @@ export default function SignUpPage() {
       // Hash the password before sending it to the backend
       const hashedPassword = await bcrypt.hash(password, 10);
 
-        const response = await axios.post("http://localhost:3000/SignUp/user", {
+        const response = await axios.post("http://localhost:4000/SignUp/user", {
             email,
             password: hashedPassword,
         });
