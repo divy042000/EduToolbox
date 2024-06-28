@@ -5,11 +5,11 @@ import TextToSpeechPage from './Pages/TextToSpeechPages'; // Assuming this is th
 import ParaphraserPage from './Pages/paraphraserPage';
 import './App.css'
 import StudentPage from './Pages/studentPage';
-import ErrorPage from './Pages/errorPage';
 import AboutPage from './Pages/aboutPage';
 import SignUpPage from './Pages/signupPage';
 import SignInPage from './Pages/signinPage';
 import MoreFeatures from './Pages/moreFeatures';
+import ErrorPage from './Pages/errorPage';
 import FlowRenderer from './Pages/mindmapPage';
 function App() {
   return (
