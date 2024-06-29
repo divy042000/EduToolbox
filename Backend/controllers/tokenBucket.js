@@ -1,7 +1,6 @@
 import express from "express";
-import redis from "redis";
-const app = express();
 import { getToken, setToken } from "./redisClient.js";
+
 
 const bucketSize = 10; // Define the bucket size or set it according to your requirements
 const refillRate = 1; // Tokens per minute
