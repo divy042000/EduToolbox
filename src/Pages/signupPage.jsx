@@ -24,31 +24,27 @@ const AISummarizer = () => {
     if (articlesFromLocalStorage) {
       setAllArticles(articlesFromLocalStorage);
     }
-  }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    // Validate email format
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage("Invalid email address.");
+    }
 
-    const existingArticle = allArticles.find(
-      (item) => item.url === article.url
-    );
-
-    if (existingArticle) return setArticle(existingArticle);
+    // Password validation
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setErrorMessage(
+        "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+      );
+    }
 
     try {
-      setIsFetching(true);
-      const response = await axios.post("/api/getSummary", {
-        articleUrl: article.url,
-      });
+      // Hash the password before sending it to the backend
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-      const { data } = response;
-
-<<<<<<< HEAD
-      if (data.summary) {
-        const newArticle = { ...article, summary: data.summary };
-        const updatedAllArticles = [newArticle, ...allArticles];
-=======
-        const response = await axios.post("http://localhost:3000/SignUp/user", {
+        const response = await axios.post("http://localhost:4000/SignUp/user", {
             email,
             password: hashedPassword,
         });

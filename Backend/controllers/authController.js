@@ -27,6 +27,7 @@ const AuthenticateToken = async (req, res, next) => {
   if (!token) {
     return res.status(401).json({ message: "Access denied. No token provided." });
   }
+  
 
   try {
     // Decode the token without verifying the signature
@@ -36,29 +37,16 @@ const AuthenticateToken = async (req, res, next) => {
     const currentTime = Math.floor(Date.now() / 1000);
 
     if (decoded.iat + 86400 > currentTime && decoded.iat < currentTime) {
-      // Token is expired, attempt to verify and refresh
-      try {
-        // Verify the token with the secret
-        const verified = jwt.verify(token, process.env.JWT_SECRET);
-        const cachedEmail = await get(verified.email);
-        if (!cachedEmail) {
-          // Query MongoDB for the user document using the token
-          const user = await User.findOne({ email: verified.email });
-          if (!user) {
-            return res.status(401).json({ message: "Token invalid or expired" });
-          }
-          user.lastLogin = Date.now();
-          await user.save();
-          // Proceed with your logic here
-          res.status(200).json({ message: "Authenticated successfully" });
-        } else {
-          res.status(200).json({ message: "Authenticated successfully" });
-          next();
-        }
-      } catch (error) {
-        console.error("JWT verification failed:", error.message);
-        res.status(401).json({ message: "Invalid token" });
+      // Verify the token with the secret
+      const verified = jwt.verify(token, process.env.JWT_SECRET);
+
+      const cachedEmail = await get(verified.email);
+
+      if (!cachedEmail) {
+        return res.status(401).json({ message: "Token invalid or expired" });
       }
+      req.user = { id: decoded.roles, email: decoded.email };
+      next();
     } else {
       return res.status(401).json({ message: "Token expired or not issued recently enough" });
     }
@@ -76,6 +64,8 @@ const SignUp = async (req, res) => {
     if (!(email && password)) {
       return res.status(400).json({ message: "Email and password are required" });
     }
+
+    
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
@@ -103,7 +93,9 @@ const SignUp = async (req, res) => {
 const getUser = async (email, password) => {
   try {
     let user = await get(email); // Retrieve the user from Redis
+
     if (!user) {
+      console.log("Reaching MongoDB");
       user = await User.findOne({ email }); // Fetch user from MongoDB if not found in Redis
       if (user) {
         // Validate the provided password against the user's hashed password
@@ -114,8 +106,6 @@ const getUser = async (email, password) => {
           throw new Error("Invalid password"); // Throw an error if the password is invalid
         }
       }
-    } else {
-      user = JSON.parse(user); // Parse the stringified JSON
     }
     return user;
   } catch (error) {
@@ -163,7 +153,6 @@ const SignIn = async (req, res) => {
 
     // Cache user details in Redis
     await set(email, token, process.env.AUTH_TTL);
-    console.log(`User ${email} set in cache with expiration of ${process.env.AUTH_TTL} seconds`);
 
     res.status(200).json({ message: "Sign in successful" });
   } catch (error) {
@@ -255,3 +244,4 @@ const Logout = async (req, res) => {
 };
 
 export { SignUp, SignIn, Logout, ForgotPassword, AuthenticateToken };
+
