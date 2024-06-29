@@ -6,8 +6,13 @@ import nodemailer from "nodemailer";
 import { get, set, del } from "./redisClient.js";
 import express from "express";
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 import Log from "../models/logSchema.js";
+=======
+import cookieParser from "cookie-parser";
+
+>>>>>>> parent of dfc613e (Changing Summarizer)
 =======
 import cookieParser from "cookie-parser";
 
@@ -16,8 +21,11 @@ import cookieParser from "cookie-parser";
 dotenvConfig();
 const app = express();
 
+<<<<<<< HEAD
 app.use(express.json());
 
+=======
+>>>>>>> parent of dfc613e (Changing Summarizer)
 const AuthenticateToken = async (req, res, next) => {
   // Check if the token is in the 'Authorization' header
   
@@ -42,6 +50,7 @@ const AuthenticateToken = async (req, res, next) => {
     const currentTime = Math.floor(Date.now() / 1000);
 
     if (decoded.iat + 86400 > currentTime && decoded.iat < currentTime) {
+<<<<<<< HEAD
 <<<<<<< HEAD
       // Token is expired, attempt to verify and refresh
       try {
@@ -78,6 +87,8 @@ const AuthenticateToken = async (req, res, next) => {
         console.error("JWT verification failed:", error.message);
         res.status(401).json({ message: "Invalid token" });
 =======
+=======
+>>>>>>> parent of dfc613e (Changing Summarizer)
       // Verify the token with the secret
       const verified = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -85,6 +96,9 @@ const AuthenticateToken = async (req, res, next) => {
 
       if (!cachedEmail) {
         return res.status(401).json({ message: "Token invalid or expired" });
+<<<<<<< HEAD
+>>>>>>> parent of dfc613e (Changing Summarizer)
+=======
 >>>>>>> parent of dfc613e (Changing Summarizer)
       }
       req.user = { id: decoded.roles, email: decoded.email };
