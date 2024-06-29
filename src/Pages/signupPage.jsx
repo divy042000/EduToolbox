@@ -43,9 +43,16 @@ const AISummarizer = () => {
 
       const { data } = response;
 
+<<<<<<< HEAD
       if (data.summary) {
         const newArticle = { ...article, summary: data.summary };
         const updatedAllArticles = [newArticle, ...allArticles];
+=======
+        const response = await axios.post("http://localhost:3000/SignUp/user", {
+            email,
+            password: hashedPassword,
+        });
+>>>>>>> parent of cfa20e9 (SignIn changes)
 
         // Update state and local storage
         setArticle(newArticle);
