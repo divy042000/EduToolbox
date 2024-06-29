@@ -43,7 +43,7 @@ export default function ParaphraserPage() {
         console.log("Process called");
         // Retrieve the token from Session Storage
         const authToken = sessionStorage.getItem("authToken");
-        
+        console.log(authToken);
         const response = await axios.post(
           "http://localhost:4000/Paraphrase/user",
           {

@@ -38,6 +38,7 @@ const AISummarizer = () => {
     try {
       console.log("Loading");
       setIsFetching(true);
+<<<<<<< HEAD
       const authToken = sessionStorage.getItem("authToken");
       console.log(authToken);
       
@@ -52,6 +53,11 @@ const AISummarizer = () => {
       });
       
       
+=======
+      const response = await axios.post("/api/getSummary", {
+        articleUrl: article.url,
+      });
+>>>>>>> parent of dfc613e (Changing Summarizer)
 
       const { data } = response;
 

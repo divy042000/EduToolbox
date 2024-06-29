@@ -1,22 +1,11 @@
 import React, { useState } from "react";
+import GrammarCheckerComponent from "../components/grammerChecker";
 
-// Define your feature components
-const GrammarCheckerComponent = () => {
-  return <div className="p-4">Grammar Checker Component Content</div>;
-};
-
-const SummarizerComponent = () => {
-  return <div className="p-4">Summarizer Component Content</div>;
-};
-
-const PlagiarismCheckerComponent = () => {
-  return <div className="p-4">Plagiarism Checker Component Content</div>;
-};
+import PlagiarismCheckerComponent from "../components/plagiarismChecker";
 
 // Component map
 const componentMap = {
   GrammarChecker: GrammarCheckerComponent,
-  Summarizer: SummarizerComponent,
   PlagiarismChecker: PlagiarismCheckerComponent,
 };
 
@@ -27,7 +16,9 @@ const TableComponent = () => {
     setSelectedFeature(feature);
   };
 
-  const SelectedComponent = selectedFeature ? componentMap[selectedFeature] : null;
+  const SelectedComponent = selectedFeature
+    ? componentMap[selectedFeature]
+    : null;
 
   return (
     <div className="border-2 flex flex-row h-screen">
@@ -46,7 +37,7 @@ const TableComponent = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
+                <tbody className="divide-y divide-gray-200 dark:divide-neutral-700 border-2 rounded-md m-2">
                   {Object.keys(componentMap).map((feature) => (
                     <tr
                       key={feature}
@@ -54,16 +45,9 @@ const TableComponent = () => {
                       onClick={() => handleFeatureClick(feature)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-neutral-200">
-                        {feature.replace(/([A-Z])/g, ' $1').trim()}
+                        {feature.replace(/([A-Z])/g, " $1").trim()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400"
-                        >
-                          Delete
-                        </button>
-                      </td>
+                      
                     </tr>
                   ))}
                 </tbody>
