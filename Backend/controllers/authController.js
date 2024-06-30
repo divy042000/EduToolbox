@@ -5,30 +5,29 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { get, set, del } from "./redisClient.js";
 import express from "express";
-
 import Log from "../models/logSchema.js";
+import cookieParser from "cookie-parser";
+
 // creating middle ware
 dotenvConfig();
 const app = express();
 
 app.use(express.json());
-
+app.use(cookieParser());
 
 const AuthenticateToken = async (req, res, next) => {
   // Check if the token is in the 'Authorization' header
-  
   const authHeader = req.headers["authorization"];
   let token;
 
   if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.split(" ")[1];
   }
-  console.log("Checking auth token :", token);
+
   if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
+    return res.status(401).json({ message: "Access denied. No token provided." });
   }
+  
 
   try {
     // Decode the token without verifying the signature
@@ -38,48 +37,21 @@ const AuthenticateToken = async (req, res, next) => {
     const currentTime = Math.floor(Date.now() / 1000);
 
     if (decoded.iat + 86400 > currentTime && decoded.iat < currentTime) {
-      // Token is expired, attempt to verify and refresh
-      try {
-        // Verify the token with the secret
-        const verified = jwt.verify(token, process.env.JWT_SECRET);
-        const cachedEmail = await get(verified.email);
-        console.log(cachedEmail);
-        if (!cachedEmail) {
-          try {
-            // Query MongoDB for the user document using the token
-            const user = await User.findOne({ email: verified.email });
-            console.log("Token expired"); 
-            if (!user) {
-              return res
-                .status(401)
-                .json({ message: "Token invalid or expired" });
-            }
-            user.lastLogin = Date.now();
-            await user.save();
-            // Proceed with your logic here
-            res.status(200).json({ message: "Authenticated successfully" });
-            console.log("Next Reached")
-          } catch (error) {
-            console.error("Error querying MongoDB:", error);
-            res.status(500).json({ message: "Internal server error" });
-          }
-        }
-        else{
-          res.status(200).json({ message: "Authenticated successfully" });
-          console.log("Next Reached");
-          next();
-        }
-      } catch (error) {
-        console.error("JWT verification failed:", error.message);
-        res.status(401).json({ message: "Invalid token" });
+      // Verify the token with the secret
+      const verified = jwt.verify(token, process.env.JWT_SECRET);
+
+      const cachedEmail = await get(verified.email);
+
+      if (!cachedEmail) {
+        return res.status(401).json({ message: "Token invalid or expired" });
       }
-    } else {
-      // Token is still valid, proceed with your logic
-      res.status(200).json({ message: "Authenticated successfully" });
+      req.user = { id: decoded.roles, email: decoded.email };
       next();
+    } else {
+      return res.status(401).json({ message: "Token expired or not issued recently enough" });
     }
   } catch (error) {
-    console.error("JWT decoding failed:", error.message);
+    console.error("JWT verification failed:", error.message);
     res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -90,23 +62,22 @@ const SignUp = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
+
+    
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(409)
-        .json({ message: "User with this email already exists" });
+      return res.status(409).json({ message: "User with this email already exists" });
     }
 
     // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user object (not yet saved to the database)
-    const user = { email, password: password };
+    // Create a new user object
+    const user = { email, password: hashedPassword };
 
     // Save the user to the database
     const newUser = new User(user);
@@ -122,14 +93,14 @@ const SignUp = async (req, res) => {
 const getUser = async (email, password) => {
   try {
     let user = await get(email); // Retrieve the user from Redis
-   
+
     if (!user) {
+      console.log("Reaching MongoDB");
       user = await User.findOne({ email }); // Fetch user from MongoDB if not found in Redis
       if (user) {
         // Validate the provided password against the user's hashed password
         const isValid = await bcrypt.compare(password, user.password);
         if (isValid) {
-          // No explicit return needed here, just continue execution
           return user; // Return the user object if password is valid
         } else {
           throw new Error("Invalid password"); // Throw an error if the password is invalid
@@ -149,9 +120,7 @@ const SignIn = async (req, res) => {
 
     // Validate input
     if (!(email && password)) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     // Validate email format
@@ -163,9 +132,7 @@ const SignIn = async (req, res) => {
     // Authenticate user
     const user = await getUser(email, password);
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User with this email does not exist" });
+      return res.status(404).json({ message: "User with this email does not exist" });
     }
 
     // Generate JWT
@@ -183,11 +150,11 @@ const SignIn = async (req, res) => {
       process.env.JWT_SECRET, // Secret key
       { expiresIn: "24h" } // Token expiration time
     );
-    // Cache the user details
+
+    // Cache user details in Redis
     await set(email, token, process.env.AUTH_TTL);
-    const newUser = new Log({ email, token });
-    await newUser.save();
-    res.status(200).json({ message: "Sign in successful", token: token });
+
+    res.status(200).json({ message: "Sign in successful" });
   } catch (error) {
     console.error("Sign in error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -207,9 +174,7 @@ const ForgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "No account with that email found." });
+      return res.status(404).json({ message: "No account with that email found." });
     }
 
     // Generate a four-digit OTP
@@ -243,18 +208,16 @@ const ForgotPassword = async (req, res) => {
     res.status(200).json({ message: "Please check your email for your OTP." });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "An error occurred. Please try again later." });
+    res.status(500).json({ message: "An error occurred. Please try again later." });
   }
 };
 
 const Logout = async (req, res) => {
   try {
     // Clear the JWT cookie
-    res.clearCookie("token", {
+    res.clearCookie('token', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production"
     });
 
     // Optionally, remove the user's token from Redis if you're storing it there
@@ -281,3 +244,4 @@ const Logout = async (req, res) => {
 };
 
 export { SignUp, SignIn, Logout, ForgotPassword, AuthenticateToken };
+

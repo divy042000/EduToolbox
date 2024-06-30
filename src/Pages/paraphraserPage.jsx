@@ -36,32 +36,29 @@ export default function ParaphraserPage() {
     setLoading(true);
     setError("");
     console.log("Button is being pressed!");
-
+  
     try {
       // Check if the input word count is greater than or equal to 20
       if (inputWordCount >= 20) {
-        console.log("Process called");
-        // Retrieve the token from Session Storage
-        const authToken = sessionStorage.getItem("authToken");
-        
-        const response = await axios.post(
-          "http://localhost:4000/Paraphrase/user",
-          {
-            text: inputArticle,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`, // Replace authToken with the actual token value
-              "Content-Type": "application/json",
-            },
+        console.log("Process called")
+         // Retrieve the token from Session Storage
+         const authToken = sessionStorage.getItem('authToken');
+         console.log(authToken);
+         const response = await axios.post('http://localhost:4000/Paraphrase/user', {
+          text: inputArticle,
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`, // Replace authToken with the actual token value
+            'Content-Type': 'application/json'
           }
-        );
-
+        });
+        
+        
         const paraphrasedText = response.data.paraphrasedText;
-
+  
         setOutputArticle(paraphrasedText);
         setOutputWordCount(handleWordCount(paraphrasedText));
-
+  
         const newArticle = { originalText: inputArticle, paraphrasedText };
         setAllParaphrases([...allParaphrases, newArticle]);
       } else {
@@ -74,6 +71,7 @@ export default function ParaphraserPage() {
       setLoading(false);
     }
   };
+  
 
   return (
     <div>
@@ -127,7 +125,8 @@ export default function ParaphraserPage() {
           </button>
         </div>
       </div>
-      {error && <ErrorToast message={error} />}
+      {error && <ErrorToast message={error}/>}
     </div>
   );
+  
 }

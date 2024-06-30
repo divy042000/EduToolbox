@@ -40,18 +40,18 @@ const AISummarizer = () => {
       setIsFetching(true);
       const authToken = sessionStorage.getItem("authToken");
       console.log(authToken);
-      
-      const response = await axios.get("http://localhost:4000/AISummarizer/user", {
-        params: {
+      const response = await axios.post(
+        "http://localhost:4000/AISummarizer/user",
+        {
           articleUrl: article.url,
         },
-        headers: {
-          Authorization: `Bearer ${authToken}`, // Replace authToken with the actual token value
-          "Content-Type": "application/json",
-        },
-      });
-      
-      
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`, // Replace authToken with the actual token value
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const { data } = response;
 
