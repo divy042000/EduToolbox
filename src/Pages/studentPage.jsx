@@ -6,7 +6,7 @@ const navigation = [
   { name: 'Paraphraser', href: '/textParaphraser' },
   { name: 'Text To Speech', href: '/text-to-speech' },
   { name: 'AI Summarizer', href: '/summarizerPage' },
-  
+  { name: 'Mind Map Tool', href: '/mindmapPage' },
   { name: 'About', href: '/aboutPage' },
 ]
 
@@ -103,12 +103,12 @@ export default function Example() {
                 </div>
                 <div className="py-6">
                   {isAuthenticated ? (
-                    <button
+                    <a
                       onClick={handleLogout}
                       className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
                     >
                       Logout
-                    </button>
+                    </a>
                   ) : (
                     <>
                       <a
