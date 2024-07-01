@@ -10,28 +10,23 @@ import {UrlShortner} from "../services/urlShortner.js"
 import RateLimiter from "../controllers/tokenBucket.js"
 import {ParaphraserService} from "../services/paraphraseIt.js"
 // import { config as dotenvConfig } from "dotenv";
+import { getTasks, createTask, deleteTask } from '../controllers/taskController.js';
 
-
-const router = Router();
+const router = express.Router();
 
 // Define routes
 router.post("/SignUp/user", SignUp);
 router.post("/SignIn/user",RateLimiter,SignIn);
 router.put("/ForgetPassword/user", ForgotPassword);
-<<<<<<< HEAD
-<<<<<<< HEAD
 router.post("/UrlShortner", AuthenticateToken,UrlShortner);
 router.post("/Paraphrase/user",AuthenticateToken,ParaphraserService);
-router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);
-
-=======
-router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
-router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
->>>>>>> parent of dfc613e (Changing Summarizer)
-=======
-router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
-router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
->>>>>>> parent of dfc613e (Changing Summarizer)
+// router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);
+router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner);
+router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService);
+router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner);
+router.get('/', getTasks);
+router.post('/', createTask);
+router.delete('/:id', deleteTask);
 // router.get("/history/articlesApi",ArticlesApi);
 // router.get("/history/paraphraserApi",ParaphraserApi);
 // router.get("/history/chatGPT",ChatApi);
