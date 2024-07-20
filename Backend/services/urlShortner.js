@@ -1,43 +1,70 @@
+import { Kafka } from "kafkajs";
+import { generate as generateUniqueId } from "shortid";
+import crypto from "crypto";
+import { Url } from "../models/urlShortnerModel.js";
 import { get, set } from "../controllers/redisClient.js";
-// import express from "express";
-import generateUniqueId from "generate-unique-id";
+import { sendUrlMessage } from "../kafkaServices/urlProducer.js";
 import { config as dotenvConfig } from "dotenv";
-import Url from "../models/urlShortnerModel.js";
 
+// setting up middleware
 dotenvConfig();
+
+// Function to encode a string using Base62
+const base62Encode = (num) => {
+  const chars =
+    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let encoded = "";
+  while (num > 0) {
+    encoded = chars[num % 62] + encoded;
+    num = Math.floor(num / 62);
+  }
+  return encoded;
+};
+
+// Example Key Generation Service (KGS)
+const generateKey = async () => {
+  const uniqueId = generateUniqueId();
+  // You can use more sophisticated methods or databases to ensure uniqueness
+  return uniqueId;
+};
 
 export const UrlShortner = async (req, res) => {
   try {
-    // Destructure LongUrl from req.query instead of req.body
     const { LongUrl } = req.body;
-
     // Check cache first
     const cacheUrl = await get(LongUrl);
 
     if (!cacheUrl) {
       // If cacheUrl does not exist, fetch from the database
       let databaseUrl = await Url.findOne({ LongUrl });
-
       if (databaseUrl) {
         // URL found in database, return it
         res.json(databaseUrl);
       } else {
-        // Generate a unique ID and create a new short URL
-        const id2 = generateUniqueId({
-          length: 10,
-          useLetters: true,
-        });
-        const baseUrl = process.env.BASE_URL;
-        const shortUrl = `${baseUrl}/${id2}`; // Fixed template literal syntax
-        console.log(shortUrl);
-        set(LongUrl, shortUrl, process.env.URL_TTL);
-        await Url.save({ LongUrl, shortUrl, Date: Date.now() }); // Correct usage of save()
-        res.json({ LongUrl, shortUrl, Date: Date.now() }); // No change needed here
+        // Generate a unique ID using KGS
+        const id2 = await generateKey();
+        // Encode the unique ID using Base62
+        const shortUrlBase62 = `${process.env.BASE_URL}/shortUrl/${base62Encode(
+          parseInt(id2, 36)
+        )}`;
+        // Cache and save both encoded URLs
+        set(LongUrl, shortUrlBase62, process.env.URL_TTL);
+        // Save to database
+        await Url.create({ LongUrl, shortUrlBase62, Date: Date.now() });
+        const message = {
+          LongUrl,
+          shortUrlBase62,
+        };
+        // Send message to Kafka
+        await sendUrlMessage(message);
+        res.json({ LongUrl, shortUrlBase62, Date: Date.now() });
       }
     } else {
       // If cacheUrl exists, respond with the cacheUrl object
-      console.log(cacheUrl);
-      res.json({ LongUrl: cacheUrl });
+      res.json({
+        LongUrl: cacheUrl.LongUrl,
+        shortUrlBase62: cacheUrl.shortUrlBase62,
+      });
     }
   } catch (err) {
     console.error(err);

@@ -6,5 +6,4 @@ const UrlSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
 });
 
-const Url =  mongoose.model("Url", UrlSchema);
-export default Url;
+export const Url =  mongoose.model("Url", UrlSchema);
