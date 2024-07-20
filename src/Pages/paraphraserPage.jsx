@@ -74,59 +74,46 @@ export default function ParaphraserPage() {
   
 
   return (
-    <div>
-      <div className="flex flex-col w-full pointer-events-auto">
-        <h1 className="head_text">
-          <br className="max-md:hidden" />
-          <span className="blue_gradient">Genius Paraphraser</span>
-        </h1>
-        <div className="flex flex-col items-center">
-          <div className="flex flex-row justify-center w-full z-10 grid-cols-1 mt-5 gap-4">
-            <div className="w-2/5 mt-5 mb-5">
-              <textarea
-                ref={inputTextareaRef}
-                className="border-4 w-full rounded-md border-slate-950 h-96 m-2 font-mono italic p-2 select-auto ..."
-                placeholder="Paste your text here or type directly"
-                onChange={handleTextChange}
-                value={inputArticle}
-              />
-              <div className="text-right mt-2 font-mono italic">
-                Words: {inputWordCount}
-              </div>
-            </div>
-            <div className="w-2/5 mt-5 mb-5">
-              <textarea
-                ref={outputTextareaRef}
-                className="border-4 w-full rounded-md border-slate-950 h-96 m-2 font-mono italic p-2 select-auto ..."
-                placeholder="Your Paraphrased Text is Here"
-                value={outputArticle}
-                readOnly
-              />
-              <div className="text-right mt-2 font-mono italic">
-                Words: {outputWordCount}
-              </div>
-            </div>
-          </div>
-          <div>
-            <button
-              onClick={handleParaphrase}
-              className="mt-5 px-2 z-10 py-2 bg-blue-500 text-white font-mono italic mb-3 rounded-md border-2 border-stone-950"
-              disabled={loading}
-            >
-              {loading ? "Paraphrasing..." : "Paraphrase It"}
-            </button>
-          </div>
-          <button
-            type="button"
-            className="black_btn"
-            onClick={() => window.open("https://github.com/hhchoksi")}
-          >
-            Github
-          </button>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8">Task Management</h1>
+      <div className="flex justify-between items-center mb-4">
+        <form onSubmit={handleSubmit} className="flex space-x-4">
+          <input
+            type="text"
+            placeholder="Title"
+            value={newTask.title}
+            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+            className="border-2 border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-blue-500"
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={newTask.description}
+            onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+            className="border-2 border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-blue-500"
+          />
+          <input
+            type="date"
+            value={newTask.dueDate}
+            onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+            className="border-2 border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:border-blue-500"
+          />
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200">Add Task</button>
+        </form>
+        <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition duration-200">Export Tasks</button>
       </div>
-      {error && <ErrorToast message={error}/>}
+      <ul>
+        {tasks.map(task => (
+          <li key={task._id} className="border-b border-gray-200 py-2 flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">{task.title}</h2>
+              <p className="text-sm text-gray-500">{task.description}</p>
+              <p className="text-sm text-gray-500">Due Date: {task.dueDate}</p>
+            </div>
+            <button onClick={() => handleDelete(task._id)} className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-200">Delete</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-  
-}
+};

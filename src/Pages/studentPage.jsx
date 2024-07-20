@@ -7,7 +7,8 @@ const navigation = [
   { name: 'Text To Speech', href: '/text-to-speech' },
   { name: 'AI Summarizer', href: '/summarizerPage' },
   { name: 'Mind Map Tool', href: '/mindmapPage' },
-  { name: 'About', href: '/aboutPage' },
+  { name: 'Task List', href: '/tasklist'},
+  { name: 'About', href: '/aboutPage' }
 ]
 
 export default function Example() {

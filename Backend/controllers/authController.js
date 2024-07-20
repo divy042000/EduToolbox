@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { get, set, del } from "./redisClient.js";
 import express from "express";
-// import Log from "../models/logSchema.js";
+import Log from "../models/logSchema.js";
 import cookieParser from "cookie-parser";
 
 // creating middle ware
