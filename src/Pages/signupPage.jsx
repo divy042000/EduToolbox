@@ -1,171 +1,158 @@
-// import React, { useState, useEffect } from "react";
-// import axios from "axios";
-// import { copy, linkIcon, loader, tick } from "../assets";
-// import ErrorToast from "../components/errorComponent";
-// import SuccessToast from "../components/successComponent";
+import axios from "axios";
+import { useState, useRef } from "react";
+import bcrypt from 'bcryptjs';
+import ErrorToast from "../components/errorComponent";
+import SuccessToast from "../components/successComponent";
 
-// const AISummarizer = () => {
-//   const [article, setArticle] = useState({
-//     url: "",
-//     summary: "",
-//   });
-//   const [allArticles, setAllArticles] = useState([]);
-//   const [copied, setCopied] = useState("");
-//   const [errorMessage, setErrorMessage] = useState("");
-//   const [successMessage, setSuccessMessage] = useState("");
-//   const [isFetching, setIsFetching] = useState(false);
+export default function SignUpPage() {
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
 
-//   // Load data from localStorage on mount
-//   useEffect(() => {
-//     const articlesFromLocalStorage = JSON.parse(
-//       localStorage.getItem("articles")
-//     );
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    console.log("Button Pressed");
 
-//     if (articlesFromLocalStorage) {
-//       setAllArticles(articlesFromLocalStorage);
-//     }
+    // Get form data
+    const email = emailRef.current.value;
+    const password = passwordRef.current.value;
+    const confirmPassword = confirmPasswordRef.current.value;
 
-//     // Validate email format
-//     const emailRegex = /\S+@\S+\.\S+/;
-//     if (!emailRegex.test(email)) {
-//       setErrorMessage("Invalid email address.");
-//     }
+    if (!email || !password || !confirmPassword) {
+      setErrorMessage("All fields are required.");
+      return;
+    }
 
-//     // Password validation
-//     const passwordRegex =
-//       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
-//     if (!passwordRegex.test(password)) {
-//       setErrorMessage(
-//         "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."
-//       );
-//     }
+    // Validate email format
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage("Invalid email address.");
+      return;
+    }
 
-//     try {
-//       // Hash the password before sending it to the backend
-//       const hashedPassword = await bcrypt.hash(password, 10);
+    // Validate password
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%*?&])[A-Za-z\d@$%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setErrorMessage(
+        "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+      );
+      return;
+    }
 
-//         const response = await axios.post("http://localhost:4000/SignUp/user", {
-//             email,
-//             password: hashedPassword,
-//         });
+    // Confirm password match
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
 
-//         // Update state and local storage
-//         setArticle(newArticle);
-//         setAllArticles(updatedAllArticles);
-//         localStorage.setItem("articles", JSON.stringify(updatedAllArticles));
-//         setSuccessMessage("Article summary fetched successfully!");
-//         setTimeout(() => setSuccessMessage(""), 3000);
-//       }
-//     } catch (error) {
-//       setErrorMessage("Failed to fetch article summary.");
-//       setTimeout(() => setErrorMessage(""), 3000);
-//     } finally {
-//       setIsFetching(false);
-//     }
-//   };
+    try {
+      // Hash the password before sending it to the backend
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-//   // Copy the URL and toggle the icon for user feedback
-//   const handleCopy = (copyUrl) => {
-//     setCopied(copyUrl);
-//     navigator.clipboard.writeText(copyUrl);
-//     setTimeout(() => setCopied(false), 3000);
-//   };
+      // Attempt to register the user
+      const response = await axios.post("http://localhost:4000/SignUp/user", {
+        email,
+        password: hashedPassword,
+      });
 
-//   const handleKeyDown = (e) => {
-//     if (e.keyCode === 13) {
-//       handleSubmit(e);
-//     }
-//   };
+      console.log(response.data);
+      setSuccessMessage("Sign up successful!");
+      setErrorMessage("");
+    } catch (error) {
+      const errorResponse =
+        error.response?.data?.message || "An error occurred during sign up.";
+      console.error(errorResponse);
+      setErrorMessage(errorResponse);
+    }
+  };
 
-//   return (
-//     <section className="mt-16 w-full max-w-xl">
-//       {/* Search */}
-//       <div className="flex flex-col w-full gap-2">
-//         <form
-//           className="relative flex justify-center items-center"
-//           onSubmit={handleSubmit}
-//         >
-//           <img
-//             src={linkIcon}
-//             alt="link-icon"
-//             className="absolute left-0 my-2 ml-3 w-5"
-//           />
+  return (
+    <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+        <img
+          className="mx-auto h-10 w-auto"
+          src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+          alt="Your Company"
+        />
+        <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+          Sign Up for an Account
+        </h2>
+      </div>
 
-//           <input
-//             type="url"
-//             placeholder="Paste the article link"
-//             value={article.url}
-//             onChange={(e) => setArticle({ ...article, url: e.target.value })}
-//             onKeyDown={handleKeyDown}
-//             required
-//             className="url_input peer"
-//           />
-//           <button
-//             type="submit"
-//             className="submit_btn peer-focus:border-gray-700 peer-focus:text-gray-700"
-//           >
-//             <p>↵</p>
-//           </button>
-//         </form>
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <form className="space-y-6" onSubmit={handleSubmit} method="POST">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+              Email address
+            </label>
+            <div className="mt-2">
+              <input
+                ref={emailRef}
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
 
-//         {/* Browse History */}
-//         <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-//           {allArticles.reverse().map((item, index) => (
-//             <div
-//               key={`link-${index}`}
-//               onClick={() => setArticle(item)}
-//               className="link_card"
-//             >
-//               <div className="copy_btn" onClick={() => handleCopy(item.url)}>
-//                 <img
-//                   src={copied === item.url ? tick : copy}
-//                   alt={copied === item.url ? "tick_icon" : "copy_icon"}
-//                   className="w-[40%] h-[40%] object-contain"
-//                 />
-//               </div>
-//               <p className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate">
-//                 {item.url}
-//               </p>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+              Password
+            </label>
+            <div className="mt-2">
+              <input
+                ref={passwordRef}
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
 
-//       {/* Display Result */}
-//       <div className="my-10 max-w-full flex justify-center items-center">
-//         {isFetching ? (
-//           <img src={loader} alt="loader" className="w-20 h-20 object-contain" />
-//         ) : errorMessage ? (
-//           <ErrorToast message={errorMessage} />
-//         ) : successMessage ? (
-//           <SuccessToast message={successMessage} />
-//         ) : (
-//           article.summary && (
-//             <div className="flex flex-col gap-3">
-//               <h2 className="font-satoshi font-bold text-gray-600 text-xl">
-//                 Article <span className="blue_gradient">Summary</span>
-//               </h2>
-//               <div className="summary_box">
-//                 <p className="font-inter font-medium text-sm text-gray-700">
-//                   {article.summary}
-//                 </p>
-//                 <div
-//                   className="copy_btn"
-//                   onClick={() => handleCopy(article.summary)}
-//                 >
-//                   <img
-//                     src={copied === article.summary ? tick : copy}
-//                     alt={copied === article.summary ? "tick_icon" : "copy_icon"}
-//                     className="w-[40%] h-[40%] object-contain"
-//                   />
-//                 </div>
-//               </div>
-//             </div>
-//           )
-//         )}
-//       </div>
-//     </section>
-//   );
-// };
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium leading-6 text-gray-900">
+              Confirm Password
+            </label>
+            <div className="mt-2">
+              <input
+                ref={confirmPasswordRef}
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
 
-// export default AISummarizer;
+          <div>
+            <button
+              type="submit"
+              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Sign up
+            </button>
+          </div>
+        </form>
+
+        <p className="mt-10 text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <a href="#" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+            Sign in
+          </a>
+        </p>
+      </div>
+      {errorMessage && <ErrorToast message={errorMessage} />}
+      {successMessage && <SuccessToast message={successMessage} />}
+    </div>
+  );
+}

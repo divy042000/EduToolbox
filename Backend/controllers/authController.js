@@ -1,11 +1,10 @@
 import { config as dotenvConfig } from "dotenv";
 import bcrypt from "bcrypt";
-import {User} from "../models/userSchema.js"; // Update the path to your User model
+import { User } from "../models/userSchema.js"; // Update the path to your User model
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { get, set, del } from "./redisClient.js";
 import express from "express";
-// import Log from "../models/logSchema.js";
 import cookieParser from "cookie-parser";
 
 // creating middle ware
@@ -27,11 +26,14 @@ const AuthenticateToken = async (req, res, next) => {
   if (!token) {
     return res.status(401).json({ message: "Access denied. No token provided." });
   }
-  
 
   try {
     // Decode the token without verifying the signature
     const decoded = jwt.decode(token);
+
+    if (typeof decoded === "string" || !decoded) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
 
     // Check if the token is expired
     const currentTime = Math.floor(Date.now() / 1000);
@@ -39,6 +41,10 @@ const AuthenticateToken = async (req, res, next) => {
     if (decoded.iat + 86400 > currentTime && decoded.iat < currentTime) {
       // Verify the token with the secret
       const verified = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (typeof verified === "string" || !verified.email) {
+        return res.status(401).json({ message: "Token invalid or expired" });
+      }
 
       const cachedEmail = await get(verified.email);
 
@@ -64,8 +70,6 @@ const SignUp = async (req, res) => {
     if (!(email && password)) {
       return res.status(400).json({ message: "Email and password are required" });
     }
-
-    
 
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
@@ -230,7 +234,11 @@ const Logout = async (req, res) => {
 
     if (token) {
       const decoded = jwt.decode(token);
-      if (decoded && decoded.email) {
+      if (typeof decoded === "string" || !decoded.email) {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+
+      if (decoded && typeof decoded !== "string" && decoded.email) {
         // Remove token from Redis
         await del(decoded.email);
       }
@@ -244,4 +252,3 @@ const Logout = async (req, res) => {
 };
 
 export { SignUp, SignIn, Logout, ForgotPassword, AuthenticateToken };
-

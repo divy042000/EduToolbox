@@ -19,7 +19,7 @@ router.post("/SignIn/user", RateLimiter, SignIn);
 router.put("/ForgetPassword/user", ForgotPassword);
 // router.post("/UrlShortner", AuthenticateToken,UrlShortner);
 // router.post("/Paraphrase/user",AuthenticateToken,ParaphraserService);
-router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);
+// router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);
 // router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
 // router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
 router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)

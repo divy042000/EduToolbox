@@ -1,22 +1,23 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import ErrorToast from "../components/errorComponent";
 import SuccessToast from "../components/successComponent";
 
 export default function SignInPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     console.log("Button Pressed");
   
     // Get form data
-    const formData = new FormData(event.target);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const email = emailRef.current.value;
+    const password = passwordRef.current.value;
   
-    if (!email ||!password) {
+    if (!email || !password) {
       setErrorMessage("Email and password are required.");
       return;
     }
@@ -73,6 +74,7 @@ export default function SignInPage() {
             </label>
             <div className="mt-2">
               <input
+                ref={emailRef}
                 id="email"
                 name="email"
                 type="email"
@@ -96,6 +98,7 @@ export default function SignInPage() {
             </div>
             <div className="mt-2">
               <input
+                ref={passwordRef}
                 id="password"
                 name="password"
                 type="password"
