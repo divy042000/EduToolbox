@@ -16,7 +16,7 @@ const router = Router();
 // Define routes
 router.post("/SignUp/user", SignUp);
 router.post("/SignIn/user", RateLimiter, SignIn);
-router.put("/ForgetPassword/user", ForgotPassword);
+router.post("/ForgetPassword/user",ForgotPassword);
 // router.post("/UrlShortner", AuthenticateToken,UrlShortner);
 // router.post("/Paraphrase/user",AuthenticateToken,ParaphraserService);
 // router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);

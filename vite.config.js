@@ -7,4 +7,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  server: {
+    port: 5173, // Set your desired port number here
+  },
 })

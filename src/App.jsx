@@ -12,6 +12,7 @@ import MoreFeatures from './Pages/moreFeatures';
 import ErrorPage from './Pages/errorPage';
 import FlowRenderer from './Pages/mindmapPage';
 import TaskListComponent from './components/tasklist';
+import ForgotPasswordPage from './Pages/forgotPassword.jsx';
 function App() {
   return (
     <Router>
@@ -26,6 +27,7 @@ function App() {
         <Route path="/SignInPage" element={<SignInPage/>}/>
         <Route path="/mindmapPage" element={<FlowRenderer/>}/>
         <Route path="/moreFeatures" element={<MoreFeatures/>}/>
+        <Route path="/ForgotPasswordPage" element={<ForgotPasswordPage/>}/>
         <Route path="*" element={<ErrorPage />} />      
         </Routes>
     </Router>
