@@ -22,7 +22,7 @@ function App() {
         <Route path="/StudentPage" element={<StudentPage />} />
         <Route path="/aboutPage" element={<AboutPage/>} />
         <Route path="/tasklist" element={<TaskListComponent />} /> {/* Task List route */}
-        {/* <Route path="/SignUpPage" element={<SignUpPage/>}/> */}
+        <Route path="/SignUpPage" element={<SignUpPage/>}/>
         <Route path="/SignInPage" element={<SignInPage/>}/>
         <Route path="/mindmapPage" element={<FlowRenderer/>}/>
         <Route path="/moreFeatures" element={<MoreFeatures/>}/>

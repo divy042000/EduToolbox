@@ -17,20 +17,13 @@ const router = Router();
 router.post("/SignUp/user", SignUp);
 router.post("/SignIn/user", RateLimiter, SignIn);
 router.put("/ForgetPassword/user", ForgotPassword);
-<<<<<<< HEAD
-<<<<<<< HEAD
-router.post("/UrlShortner", AuthenticateToken,UrlShortner);
-router.post("/Paraphrase/user",AuthenticateToken,ParaphraserService);
+// router.post("/UrlShortner", AuthenticateToken,UrlShortner);
+// router.post("/Paraphrase/user",AuthenticateToken,ParaphraserService);
 router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);
-
-=======
+// router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
+// router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
 router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
 router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
->>>>>>> parent of dfc613e (Changing Summarizer)
-=======
-router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
-router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
->>>>>>> parent of dfc613e (Changing Summarizer)
 // router.get("/history/articlesApi",ArticlesApi);
 // router.get("/history/paraphraserApi",ParaphraserApi);
 // router.get("/history/chatGPT",ChatApi);
