@@ -21,9 +21,8 @@ router.post("/ForgetPassword/user",ForgotPassword);
 // router.post("/Paraphrase/user",AuthenticateToken,ParaphraserService);
 // router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);
 // router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
-// router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
-router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
 router.post("/Paraphrase/user",AuthenticateToken,RateLimiter,ParaphraserService)
+router.post("/UrlShortner", AuthenticateToken,RateLimiter,UrlShortner)
 // router.get("/history/articlesApi",ArticlesApi);
 // router.get("/history/paraphraserApi",ParaphraserApi);
 // router.get("/history/chatGPT",ChatApi);
