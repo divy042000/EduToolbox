@@ -84,30 +84,6 @@ const SignUp = async (req, res) => {
   }
 };
 
-const getUser = async (email, password) => {
-  try {
-    let user = await get(email); // Retrieve the user from Redis
-
-    if (!user) {
-      console.log("Reaching MongoDB");
-      user = await User.findOne({ email }); // Fetch user from MongoDB if not found in Redis
-      if (user) {
-        // Validate the provided password against the user's hashed password
-        const isValid = await bcrypt.compare(password, user.password);
-        if (isValid) {
-          return user; // Return the user object if password is valid
-        } else {
-          throw new Error("Invalid password"); // Throw an error if the password is invalid
-        }
-      }
-    }
-    return user;
-  } catch (error) {
-    console.error("Failed to retrieve user:", error.message);
-    throw error;
-  }
-};
-
 const SignIn = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -125,8 +101,8 @@ const SignIn = async (req, res) => {
       return res.status(400).json({ message: "Invalid email address" });
     }
 
+    const user = await User.findOne({email});
     // Authenticate user
-    const user = await getUser(email, password);
     if (!user) {
       return res
         .status(404)
@@ -134,26 +110,27 @@ const SignIn = async (req, res) => {
     }
 
     // Generate JWT
-    const payload = {
-      iss: "edutoolbox.com", // Issuer
-      sub: "1234567890", // Subject - could be a unique identifier for the user
-      aud: "client-id", // Audience - intended recipient of the token
-      iat: Math.floor(Date.now() / 1000), // Issued At - current Unix timestamp
-      email: email, // Custom claim - user's email
-      roles: "user", // Custom claim - user roles
-    };
+      const payload = {
+        iss: "edutoolbox.com", // Issuer
+        sub: "1234567890", // Subject - could be a unique identifier for the user
+        aud: "client-id", // Audience - intended recipient of the token
+        iat: Math.floor(Date.now() / 1000), // Issued At - current Unix timestamp
+        email: email, // Custom claim - user's email
+        roles: "user", // Custom claim - user roles
+      };
 
-    const token = jwt.sign(
-      payload, // Updated payload with standard and custom claims
-      process.env.JWT_SECRET, // Secret key
-      { expiresIn: "24h" } // Token expiration time
-    );
+      const token = jwt.sign(
+        payload, // Updated payload with standard and custom claims
+        process.env.JWT_SECRET, // Secret key
+        { expiresIn: "24h" } // Token expiration time
+      );
 
-    // Cache user details in Redis
-    await set(email, token, process.env.AUTH_TTL);
+      // Cache user details in Redis
+      await set(email, token, process.env.AUTH_TTL);
 
-    res.status(200).json({ message: "Sign in successful" });
-  } catch (error) {
+      res.status(200).json({ message: "Sign in successful" });
+    } 
+  catch (error) {
     console.error("Sign in error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
