@@ -12,8 +12,13 @@ const UserSchema = new mongoose.Schema({
   password: { 
     type: String, 
     required: [true, "Password can't be blank"] 
+  },
+  resetOTP: {
+    type: Number
+  },
+  resetOTPExpires: {
+    type: Date
   }
 }, { timestamps: true });
 
 export const User = mongoose.model('User', UserSchema);
-    

@@ -8,6 +8,7 @@ import {
 import {UrlShortner} from "../services/urlShortner.js"
 import RateLimiter from "../controllers/tokenBucket.js"
 import {ParaphraserService} from "../services/paraphraseIt.js"
+import { createTask, getTaskById, getTasks, deleteTask, updateTask } from "../controllers/taskController.js";
 // import { config as dotenvConfig } from "dotenv";
 
 
@@ -17,6 +18,11 @@ const router = Router();
 router.post("/SignUp/user", SignUp);
 router.post("/SignIn/user", RateLimiter, SignIn);
 router.post("/ForgetPassword/user",ForgotPassword);
+router.post("/createTask", createTask);
+router.get("/getTasks", getTasks);
+router.get("/getTask/:id", getTaskById);
+router.put("/updateTask/:id", updateTask);
+router.delete("/deleteTask/:id", deleteTask);
 // router.post("/UrlShortner", AuthenticateToken,UrlShortner);
 // router.post("/Paraphrase/user",AuthenticateToken,ParaphraserService);
 // router.get("/AISummarizer/user",AuthenticateToken,getArticleSummary);

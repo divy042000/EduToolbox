@@ -2,8 +2,6 @@
   "compilerOptions": {
     "checkJs": true,
     "jsx": "react-jsx",
-    "jsxFactory": "React.createElement",
-    "jsxFragmentFactory": "React.Fragment",
     "target": "es2020",
     "module": "esnext",
     "moduleResolution": "node",

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Dialog } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const navigation = [
   { name: 'Paraphraser', href: '/textParaphraser' },
@@ -14,10 +15,37 @@ const navigation = [
 export default function Example() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    // Check authentication status on component mount and route changes
+    checkAuthStatus()
+  }, [location])
+
+  const checkAuthStatus = () => {
+    // Check if user is authenticated (e.g., by verifying token in localStorage)
+    const token = localStorage.getItem('token')
+    if (token) {
+      setIsAuthenticated(true)
+      // Redirect to home if trying to access signup or signin pages
+      if (['/SignUpPage', '/SignInPage'].includes(location.pathname)) {
+        navigate('/')
+      }
+    } else {
+      setIsAuthenticated(false)
+    }
+  }
 
   const handleLogout = () => {
-    // Perform logout logic here (e.g., clear tokens, update state, etc.)
+    // Clear token from localStorage
+    localStorage.removeItem('token')
     setIsAuthenticated(false)
+    navigate('/')
+  }
+
+  const handleSignUp = () => {
+    navigate('/SignUpPage')
   }
 
   return (
@@ -52,19 +80,14 @@ export default function Example() {
             ))}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-4">
-            {isAuthenticated ? (
+          {isAuthenticated ? (
               <button onClick={handleLogout} className="text-sm font-semibold font-mono leading-6 text-gray-900">
                 Logout <span aria-hidden="true">&rarr;</span>
               </button>
             ) : (
-              <>
-                <a href="/SignUpPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
-                  Sign Up <span aria-hidden="true">&rarr;</span>
-                </a>
-                <a href="/SignInPage" className="text-sm font-semibold font-mono leading-6 text-gray-900">
-                  Sign In <span aria-hidden="true">&rarr;</span>
-                </a>
-              </>
+              <button onClick={handleSignUp} className="text-sm font-semibold font-mono leading-6 text-gray-900">
+                Sign Up <span aria-hidden="true">&rarr;</span>
+              </button>
             )}
           </div>
         </nav>
