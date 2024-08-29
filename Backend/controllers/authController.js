@@ -4,49 +4,10 @@ import { User } from "../models/userSchema.js"; // Update the path to your User 
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { get, set, del } from "./redisClient.js";
-import express from "express";
-import cookieParser from "cookie-parser";
 
 // creating middle ware
 dotenvConfig();
-const app = express();
 
-app.use(express.json());
-app.use(cookieParser());
-
-const AuthenticateToken = async (req, res, next) => {
-  // Check if the token is in the 'Authorization' header
-  const authHeader = req.headers["authorization"];
-  let token;
-
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    token = authHeader.split(" ")[1];
-  }
-
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
-  }
-
-  try {
-    // Verify the token with the secret
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (typeof verified === "string" || !verified.email) {
-      return res.status(401).json({ message: "Token invalid or expired" });
-    }
-
-    // Set the user information in the request
-    req.user = { email: verified.email, roles: verified.roles };
-
-    // Proceed to the next middleware or route handler
-    next();
-  } catch (error) {
-    console.error("JWT verification failed:", error.message);
-    res.status(401).json({ message: "Invalid token" });
-  }
-};
 
 const SignUp = async (req, res) => {
   try {
@@ -57,6 +18,12 @@ const SignUp = async (req, res) => {
       return res
         .status(400)
         .json({ message: "Email and password are required" });
+    }
+
+    // Validate email format
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email address" });
     }
 
     // Check if the user already exists
@@ -71,11 +38,7 @@ const SignUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user object
-    const user = { email, password: hashedPassword };
-
-    // Save the user to the database
-    const newUser = new User(user);
-    await newUser.save();
+    await User.create({ email, password: hashedPassword });
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -95,13 +58,7 @@ const SignIn = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    // Validate email format
-    const emailRegex = /\S+@\S+\.\S+/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email address" });
-    }
-
-    const user = await User.findOne({email});
+    const user = await User.findOne({ email });
     // Authenticate user
     if (!user) {
       return res
@@ -109,27 +66,36 @@ const SignIn = async (req, res) => {
         .json({ message: "User with this email does not exist" });
     }
 
+    //Check password 
+    const isPassword = await bcrypt.compare(user.password, password);
+
+    if (!isPassword) {
+      return res
+        .status(401)
+        .json({ message: "Incorrect password" });
+    }
+
     // Generate JWT
-      const payload = {
-        iss: "edutoolbox.com", // Issuer
-        sub: "1234567890", // Subject - could be a unique identifier for the user
-        aud: "client-id", // Audience - intended recipient of the token
-        iat: Math.floor(Date.now() / 1000), // Issued At - current Unix timestamp
-        email: email, // Custom claim - user's email
-        roles: "user", // Custom claim - user roles
-      };
+    const payload = {
+      iss: "edutoolbox.com", // Issuer
+      sub: "1234567890", // Subject - could be a unique identifier for the user
+      aud: "client-id", // Audience - intended recipient of the token
+      iat: Math.floor(Date.now() / 1000), // Issued At - current Unix timestamp
+      email: email, // Custom claim - user's email
+      roles: "user", // Custom claim - user roles
+    };
 
-      const token = jwt.sign(
-        payload, // Updated payload with standard and custom claims
-        process.env.JWT_SECRET, // Secret key
-        { expiresIn: "24h" } // Token expiration time
-      );
+    const token = jwt.sign(
+      payload, // Updated payload with standard and custom claims
+      process.env.JWT_SECRET, // Secret key
+      { expiresIn: "24h" } // Token expiration time
+    );
 
-      // Cache user details in Redis
-      await set(email, token, process.env.AUTH_TTL);
+    // Cache user details in Redis
+    await set(email, token, process.env.AUTH_TTL);
 
-      res.status(200).json({ message: "Sign in successful" });
-    } 
+    res.status(200).json({ message: "Sign in successful" });
+  }
   catch (error) {
     console.error("Sign in error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -138,56 +104,41 @@ const SignIn = async (req, res) => {
 
 const ForgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
 
     // Validate input
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
-    // Find the user by email
-    const user = await User.findOne({ email });
-
-    if (!user) {
+    if (!(oldPassword && newPassword && confirmPassword)) {
       return res
-        .status(404)
-        .json({ message: "No account with that email found." });
+        .status(400)
+        .json({ message: "All fields are required" });
     }
 
-    // Generate a four-digit OTP
-    const otp = Math.floor(1000 + Math.random() * 9000);
+    const user = await User.findById(req.user.id);
 
-    // Set the OTP and expiry on the user object
-    user.resetOTP = otp;
-    user.resetOTPExpires = Date.now() + 60000; // Expires in 1 minute
+    if(newPassword !== confirmPassword) {
+      return res
+       .status(400)
+       .json({ message: "New password and confirmation password do not match" });
+    }
 
-    // Save the user object
-    await user.save();
+    const isPassword = await bcrypt.compare(user.password, oldPassword);
 
-    // Send email with OTP
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+    if(!isPassword) {
+      return res
+        .status(401)
+        .json({ message: "Incorrect password" });
+    }
 
-    const mailOptions = {
-      from: process.env.EMAIL_USERNAME,
-      to: email,
-      subject: "Your OTP for password reset",
-      text: `Your OTP is: ${otp}. Please enter this OTP to reset your password.`,
-    };
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await transporter.sendMail(mailOptions);
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, {password: hashedPassword}, {new: true});
 
-    res.status(200).json({ message: "Please check your email for your OTP." });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "An error occurred. Please try again later." });
+    res.status(200).json({ message: "Password updated successfully" });
+  }
+  catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -226,4 +177,4 @@ const Logout = async (req, res) => {
   }
 };
 
-export { SignUp, SignIn, Logout, ForgotPassword, AuthenticateToken };
+export { SignUp, SignIn, Logout, ForgotPassword };

@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { setParaphraseHistory,getParaphraseHistory } from '../controllers/historyController.js'; 
+import { setParaphraseHistory, getParaphraseHistory } from '../controllers/historyController.js';
+import { model } from '../models/gemini.js'
 // Paraphraser service is ready for purpose of execution
 
 export const paraphraseText = async (text) => {
@@ -9,30 +10,26 @@ export const paraphraseText = async (text) => {
     throw new TypeError('Input must be a non-empty string');
   }
 
-  const API_URL = process.env.RAPID_PARAPHRASE_API_URL;
-  const API_HOST = process.env.RAPID_PARAPHRASE_HOST;
-  const API_KEY = process.env.RAPID_PARAPHRASE_KEY;
-
-  if (!API_URL || !API_HOST || !API_KEY) {
-    throw new Error('Missing required environment variables');
-  }
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  console.log(GEMINI_API_KEY);
 
   try {
-    const response = await axios({
-      method: 'post',
-      url: API_URL,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-RapidAPI-Host': API_HOST,
-        'X-RapidAPI-Key': API_KEY,
-      },
-      data: {
-        text,
-        result_type: 'multiple',
-      },
-    });
+    const geminiQuery = `Act as a text paraphraser service and paraphrase the given text: 
+        ${text}`;
 
-    return response.data.flat().join('\n\n');
+    const geminiResults = await model.generateContent(geminiQuery);
+    const response = geminiResults.response;
+    const textContent = response.text();
+
+    // Save the paraphrased text to the database
+    await setParaphraseHistory(text, textContent);
+
+    // Get the paraphrase history
+    const paraphraseHistory = await getParaphraseHistory();
+
+    return {
+      textContent, paraphraseHistory
+    };
   } catch (error) {
     console.error('Error in paraphraseText:', error);
     if (error.response) {
