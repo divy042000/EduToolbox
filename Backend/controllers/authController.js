@@ -6,11 +6,10 @@ import nodemailer from "nodemailer";
 import { get, set, del } from "./redisClient.js";
 import express from "express";
 import cookieParser from "cookie-parser";
-
+import { createProfileUser } from "../kafkaServices/urlProducer.js";
 // creating middle ware
 dotenvConfig();
 const app = express();
-
 app.use(express.json());
 app.use(cookieParser());
 
@@ -18,7 +17,6 @@ const AuthenticateToken = async (req, res, next) => {
   // Check if the token is in the 'Authorization' header
   const authHeader = req.headers["authorization"];
   let token;
-
   if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.split(" ")[1];
   }
@@ -77,6 +75,10 @@ const SignUp = async (req, res) => {
     const newUser = new User(user);
     await newUser.save();
 
+    // Send a message to the profile-creation topic
+    const message = { userId: newUser._id, email: newUser.email };
+    await createProfileUser(JSON.stringify(message));
+
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     console.error(error);
@@ -101,7 +103,7 @@ const SignIn = async (req, res) => {
       return res.status(400).json({ message: "Invalid email address" });
     }
 
-    const user = await User.findOne({email});
+    const user = await User.findOne({ email });
     // Authenticate user
     if (!user) {
       return res
@@ -110,27 +112,26 @@ const SignIn = async (req, res) => {
     }
 
     // Generate JWT
-      const payload = {
-        iss: "edutoolbox.com", // Issuer
-        sub: "1234567890", // Subject - could be a unique identifier for the user
-        aud: "client-id", // Audience - intended recipient of the token
-        iat: Math.floor(Date.now() / 1000), // Issued At - current Unix timestamp
-        email: email, // Custom claim - user's email
-        roles: "user", // Custom claim - user roles
-      };
+    const payload = {
+      iss: "edutoolbox.com", // Issuer
+      sub: "1234567890", // Subject - could be a unique identifier for the user
+      aud: "client-id", // Audience - intended recipient of the token
+      iat: Math.floor(Date.now() / 1000), // Issued At - current Unix timestamp
+      email: email, // Custom claim - user's email
+      roles: "user", // Custom claim - user roles
+    };
 
-      const token = jwt.sign(
-        payload, // Updated payload with standard and custom claims
-        process.env.JWT_SECRET, // Secret key
-        { expiresIn: "24h" } // Token expiration time
-      );
+    const token = jwt.sign(
+      payload, // Updated payload with standard and custom claims
+      process.env.JWT_SECRET, // Secret key
+      { expiresIn: "24h" } // Token expiration time
+    );
 
-      // Cache user details in Redis
-      await set(email, token, process.env.AUTH_TTL);
+    // Cache user details in Redis
+    await set(email, token, process.env.AUTH_TTL);
 
-      res.status(200).json({ message: "Sign in successful" });
-    } 
-  catch (error) {
+    res.status(200).json({ message: "Sign in successful" });
+  } catch (error) {
     console.error("Sign in error:", error);
     res.status(500).json({ message: "Internal server error" });
   }

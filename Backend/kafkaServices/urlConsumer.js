@@ -3,6 +3,9 @@ import { set, get, setToken, getToken, del } from "../controllers/redisClient";
 
 // Create a Kafka client
 //Monitoring and Metrics: Kafka tracks various metrics per clientId, such as throughput, latency, and error rates. Having separate clientIds makes it easier to monitor and troubleshoot individual components of your system.
+
+// we are using kafka with default partition ,so that if any message without any key appears it will be sent ot a random selected partition , then if all of the messages appear to be without keys then they will be sent to same partition where as if key is being seen then it will be sent to the partition where the key.
+
 const kafka = new Kafka({
   clientId: "urlKafkaConsumer",
   brokers: ["localhost:9092"], // Replace with your Kafka broker addresses

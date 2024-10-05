@@ -17,7 +17,7 @@ client
     console.log("Connected to Redis");
   })
   .catch(console.error);
-
+  
 // Create a Redlock instance
 const redlock = new Redlock([client], {
   driftFactor: 0.01,

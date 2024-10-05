@@ -1,15 +1,62 @@
-import { getJSON, setJSON,delJSON } from "../controllers/redisClient.js";
+import { getJSON, setJSON, delJSON } from "../controllers/redisClient.js";
 import { paraphraserHistoryModel } from "../models/historySchema.js";
 
 
 
 
-async function fetchparapharseHistoryFromDatabase(email) {
+// API endpoint handler
+export const handleParaphraseHistoryRequest = async (req, res) => {
+  const { email, limit = 10, page = 1 } = req.body;
+
+  if (!email || typeof email !== "string") {
+    return res.status(400).json({ error: "Invalid email provided" });
+  }
+
   try {
-    //Calling .lean() converts these document instances into plain objects,
-    //Calling .exec() forces the execution of the query. Without .exec(), the query wouldn't actually run until you awaited the promise it returns.
+    const history = await getParaphraseHistory(email, limit, page);
+    res.json(history);
+  } catch (error) {
+    console.error(`Failed to fetch history for email: ${email}`, error);
+    res.status(500).json({ error: "Failed to fetch history" });
+  }
+};
+
+// Main function to get paraphrase history
+export const getParaphraseHistory = async (email, limit = 20, page = 1) => {
+  const key = `paraphraser:history:${email}:${page}:${limit}`;
+
+  try {
+    // Try to get history from Redis
+    let history = await getJSON(key);
+
+    if (!history) {
+      // If not found in Redis, fetch from the database
+      history = await ParaphraseHistoryFromDatabase(email, limit, page);
+      if (history && history.length > 0) {
+        // Store fetched history in Redis with an expiration time (e.g., 5 minutes)
+        await setJSON(key, history, 300); // 300 seconds = 5 minutes
+      } else {
+        console.warn(
+          `No history found for email: ${email}, page: ${page}, limit: ${limit}`
+        );
+      }
+    }
+    return history;
+  } catch (error) {
+    console.error(
+      `Failed to fetch history for email: ${email}, page: ${page}, limit: ${limit}`,
+      error
+    );
+    throw error;
+  }
+}
+
+async function ParaphraseHistoryFromDatabase(email, limit, page) {
+  try {
+    const skip = (page - 1) * limit;
     return await paraphraserHistoryModel
       .findOne({ userEmail: email })
+      .slice("history", [skip, limit])
       .lean()
       .exec();
   } catch (error) {
@@ -17,36 +64,6 @@ async function fetchparapharseHistoryFromDatabase(email) {
     throw error;
   }
 }
-
-export const getParaphraseHistory = async (email) => {
-  if (!email || typeof email !== "string") {
-    throw new Error("Invalid email provided");
-  }
-  // Generate a unique key based on the email
-  const key = `paraphraser:history:${email}`;
-  try {
-    // Try to get history from Redis
-    const history = await getJSON(key);
-    if (!history) {
-
-      // If not found in Redis, fetch from the database
-      const historyFromDb = await fetchparapharseHistoryFromDatabase(email);
-
-      if (historyFromDb) {
-        // Store fetched history in Redis for future requests
-        await setJSON(key, historyFromDb);
-      } else {
-        console.warn(`No history found for email: ${email}`);
-      }
-    }
-    // returning history JSON Data.
-
-    return history;
-  } catch (error) {
-    console.error(`Failed to fetch history for email: ${email}`, error);
-    throw error;
-  }
-};
 
 const saveHistoryToDatabase = async (history) => {
   if (
@@ -79,7 +96,7 @@ const saveHistoryToDatabase = async (history) => {
   }
 };
 
-export const setParaphraseHistory = async (email,history) => {
+export const setParaphraseHistory = async (email, history) => {
   if (!email || typeof email !== "string" || !history) {
     throw new Error("Invalid email or history provided");
   }
@@ -100,37 +117,37 @@ export const setParaphraseHistory = async (email,history) => {
   }
 };
 
-
 // Assuming you have a function to delete history from the database
 // This function might vary based on your schema and requirements
 async function deleteHistoryFromDatabase(email) {
-    try {
-      await paraphraserHistoryModel.deleteOne({ userEmail: email });
-      console.log('History deleted from database successfully');
-    } catch (error) {
-      console.error('Failed to delete history from database:', error);
-      throw error;
-    }
+  try {
+    await paraphraserHistoryModel.deleteOne({ userEmail: email });
+    console.log("History deleted from database successfully");
+  } catch (error) {
+    console.error("Failed to delete history from database:", error);
+    throw error;
   }
-  
-  export const deleteParaphraseHistory = async (email) => {
-    if (!email || typeof email !== "string") {
-      throw new Error("Invalid email provided");
-    }
-    // Generate a unique key based on the email
-    const key = `paraphraser:history:${email}`;
-    try {
-      // Delete history from the database
-      await deleteHistoryFromDatabase(email);
-      // Remove the history from Redis
-      await delJSON(key); // Assuming you have a delJSON function similar to setJSON for Redis deletion
-      console.log(`History for email: ${email} has been deleted and removed from cache.`);
-    } catch (error) {
-      console.error(
-        `Failed to delete and remove history for email: ${email}`,
-        error
-      );
-      throw error;
-    }
-  };
-  
+}
+
+export const deleteParaphraseHistory = async (email) => {
+  if (!email || typeof email !== "string") {
+    throw new Error("Invalid email provided");
+  }
+  // Generate a unique key based on the email
+  const key = `paraphraser:history:${email}`;
+  try {
+    // Delete history from the database
+    await deleteHistoryFromDatabase(email);
+    // Remove the history from Redis
+    await delJSON(key); // Assuming you have a delJSON function similar to setJSON for Redis deletion
+    console.log(
+      `History for email: ${email} has been deleted and removed from cache.`
+    );
+  } catch (error) {
+    console.error(
+      `Failed to delete and remove history for email: ${email}`,
+      error
+    );
+    throw error;
+  }
+};

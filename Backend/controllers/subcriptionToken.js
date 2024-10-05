@@ -23,7 +23,7 @@ async function updateDatabase(tier, subscriptionId) {
   );
 }
 
-export default SubscriptionBucket;
+// export default SubscriptionBucket;
 
 async function extractEmailFromToken(token) {
   try {

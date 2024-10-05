@@ -80,7 +80,6 @@ export const handleGoldUser = async (email, subscriptionJSON) => {
       return { status: 200, message: "Handling gold user"};
     });
   } catch (error) {
-    // Log the error and rethrow it to allow higher-level error handling
     console.error(`Failed to handle gold user: ${userKey}`, error);
     throw error;
   }
