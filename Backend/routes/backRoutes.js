@@ -2,8 +2,7 @@ import { Router } from "express";
 import {
   SignUp,
   SignIn,
-  ForgotPassword,
-  AuthenticateToken,
+  ForgotPassword
 } from "../controllers/authController.js"; // Assuming SignUp and SignIn are exported from authController
 import {UrlShortner} from "../services/urlShortner.js"
 import RateLimiter from "../controllers/tokenBucket.js"

@@ -57,6 +57,12 @@ const SignUp = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
+    // Validate email format
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email address" });
+    }
+
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -69,11 +75,7 @@ const SignUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user object
-    const user = { email, password: hashedPassword };
-
-    // Save the user to the database
-    const newUser = new User(user);
-    await newUser.save();
+    await User.create({ email, password: hashedPassword });
 
     // Send a message to the profile-creation topic
     const message = { userId: newUser._id, email: newUser.email };
@@ -111,6 +113,15 @@ const SignIn = async (req, res) => {
         .json({ message: "User with this email does not exist" });
     }
 
+    //Check password 
+    const isPassword = await bcrypt.compare(user.password, password);
+
+    if (!isPassword) {
+      return res
+        .status(401)
+        .json({ message: "Incorrect password" });
+    }
+
     // Generate JWT
     const payload = {
       iss: "edutoolbox.com", // Issuer
@@ -139,56 +150,41 @@ const SignIn = async (req, res) => {
 
 const ForgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
 
     // Validate input
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
-    // Find the user by email
-    const user = await User.findOne({ email });
-
-    if (!user) {
+    if (!(oldPassword && newPassword && confirmPassword)) {
       return res
-        .status(404)
-        .json({ message: "No account with that email found." });
+        .status(400)
+        .json({ message: "All fields are required" });
     }
 
-    // Generate a four-digit OTP
-    const otp = Math.floor(1000 + Math.random() * 9000);
+    const user = await User.findById(req.user.id);
 
-    // Set the OTP and expiry on the user object
-    user.resetOTP = otp;
-    user.resetOTPExpires = Date.now() + 60000; // Expires in 1 minute
+    if(newPassword !== confirmPassword) {
+      return res
+       .status(400)
+       .json({ message: "New password and confirmation password do not match" });
+    }
 
-    // Save the user object
-    await user.save();
+    const isPassword = await bcrypt.compare(user.password, oldPassword);
 
-    // Send email with OTP
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+    if(!isPassword) {
+      return res
+        .status(401)
+        .json({ message: "Incorrect password" });
+    }
 
-    const mailOptions = {
-      from: process.env.EMAIL_USERNAME,
-      to: email,
-      subject: "Your OTP for password reset",
-      text: `Your OTP is: ${otp}. Please enter this OTP to reset your password.`,
-    };
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await transporter.sendMail(mailOptions);
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, {password: hashedPassword}, {new: true});
 
-    res.status(200).json({ message: "Please check your email for your OTP." });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "An error occurred. Please try again later." });
+    res.status(200).json({ message: "Password updated successfully" });
+  }
+  catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -227,4 +223,4 @@ const Logout = async (req, res) => {
   }
 };
 
-export { SignUp, SignIn, Logout, ForgotPassword, AuthenticateToken };
+export { SignUp, SignIn, Logout, ForgotPassword };
